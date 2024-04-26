@@ -7,17 +7,23 @@ import (
 	"runtime"
 )
 
-var errorAbout bool = false
+var errorLogin bool = false
+var errorlanding bool = false
 
 func login(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("src/templates/login.html"))
-	tmpl.Execute(w, errorAbout)
+	tmpl.Execute(w, errorLogin)
+}
+
+func landing(w http.ResponseWriter, r *http.Request) {
+	tmpl := template.Must(template.ParseFiles("src/templates/landing.html"))
+	tmpl.Execute(w, errorlanding)
 }
 
 func main() {
-	//http.HandleFunc("/", about)
-	http.Handle("/", http.HandlerFunc(login))
-	Open("http://localhost/")
+	http.Handle("/home", http.HandlerFunc(landing))
+	http.Handle("/login", http.HandlerFunc(login))
+	Open("http://localhost/home")
 	http.ListenAndServe("", nil)
 }
 

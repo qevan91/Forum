@@ -89,3 +89,12 @@
   padding-right: 1.5em;
   color: #919191;
 }
+
+.header {
+  display: flex;
+  align-items: center;
+}
+
+.header h1 {
+  margin-right: 20px;
+}
