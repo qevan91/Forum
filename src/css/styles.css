@@ -1,100 +1,51 @@
-/* Importing Google Fonts */
-@import url("https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Martian+Mono&display=swap");
-
-/* Global styles */
-* {
-  font-family: "M PLUS Rounded 1c", sans-serif;
-  margin: 0;
-  padding: 0; /*
-  border-width: 1px;
-  border-style: dashed;
-  border-color: red;*/
-}
-
-/* Top section styles */
-.top {
-  display: grid;
-  grid-template-areas: "icon buttons title infos";
-  grid-template-columns: clamp(5em, 10%, 10%) clamp(6em, 20%, 20%) 50% auto;
-  margin-right: 4em;
-}
-
-.icon {
-  color: #1e1e1e;
-}
-
-.content {
-  margin-top: 1em;
-  margin-bottom: 3em;
-}
-
-/* Main layout styles */
-.all {
-  display: grid;
-  grid-template-areas: "content sep game";
-  grid-template-columns: clamp(22em, 55%, 100%) 3px auto;
-}
-
-/* Button list styles */
-.button-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-.form-group {
-  height: 2.5em;
-  display: flex;
-  margin-bottom: 5px;
-}
-
-.form-group input {
-  font-size: 14px;
-  border-radius: 5px;
-  background-color: #f1f1f1;
-  border: none;
-  padding-left: 15px;
-  height: 100%;
-  width: clamp(12em, 30%, 30%);
-  margin-right: 5px;
-}
-.form-group input:focus {
-  outline: none;
-}
-.form-group input::placeholder {
-  color: #909090;
-}
-
-.form-group svg {
-  height: 15px;
-  width: 15px;
-  align-self: center;
-  justify-content: space-between;
-  fill: #ffffff;
-  vertical-align: middle;
-}
-
-.form-group button {
-  cursor: pointer;
-}
-
-.white-button {
-  height: 100%;
-  border-style: solid;
-  border-color: #f5f5f5;
-  border-radius: 5px;
-  background-color: #ffffff;
-  padding-left: 1.5em;
-  padding-right: 1.5em;
-  color: #919191;
-}
-
 .header {
-  display: flex;
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  gap: 20px;
+  padding: 10px; 
+  /*background: #e0e0e0; (couleur de fond faux que tu me donne ton avis*/
+}
+
+.logo {
+  width: 60px; 
+  height: 60px; 
+  border-radius: 50%; 
+}
+.account_logo{
+  width: 60px; 
+  height: 60px; 
+  border-radius: 50%;
+}
+
+.account {
+  display: flex; 
   align-items: center;
 }
 
-.header h1 {
-  margin-right: 20px;
+.account-icon {
+  font-size: 100px; 
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 28px;
+  background: #f6f6f6; 
+  gap: 10px; 
+}
+
+.search-icon {
+  font-size: 24px; 
+}
+
+.search-input {
+  font-size: 16px;
+  font-family: 'Lexend', sans-serif;
+  color: #333;
+  outline: none;
+  border: none;
+  background: transparent;
+  padding: 5px;
 }
