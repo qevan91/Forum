@@ -3,33 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="/src/css/styles.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <link rel="stylesheet" href="/src/css/login.css">
   <title>Login</title>
 </head>
 <body>
-  <h1>ForAnime</h1>
-  <h2>Login</h2>
-  <form action="/login" method="post">
-    <label for="username">Username:</label>
-    <input
-      type="text"
-      id="username"
-      name="username"
-      required
-      placeholder="Enter your username"
-      autofocus
-    />
-    <br><br>
-    <label for="password">Password:</label>
-    <input
-      type="password"
-      id="password"
-      name="password"
-      required
-      placeholder="Enter your password"
-    />
-    <br><br>
-    <button type="submit">Submit</button>
+  <form>
+    <div class="header">
+      <a href="landing_n.html">
+        <img class="logo" src="/img/logo.png" alt="Logo du site" />
+      </a>
+      <div class="search">
+        <form>
+            <input
+                type="text"
+                required=""
+                name="search"
+                placeholder="Search for an anime or a topic"
+            />
+            <button type="submit"><span class="search-icon material-symbols-outlined">search</span></button>
+        </form>
+    </div>
+      <div class="account">
+        <a href="login.html">
+            <img class="account_logo" src="/img/account_logo.jpg" alt="img du compte" />
+        </a>
+    </div>
+  </div>
   </form>
+  <div class="log">
+    <div class="wrapper">
+      <div class="card-switch">
+          <label class="switch">
+             <input type="checkbox" class="toggle">
+             <span class="slider"></span>
+             <span class="card-side"></span>
+             <div class="flip-card__inner">
+                <div class="flip-card__front">
+                   <div class="title">Log in</div>
+                   <form class="flip-card__form" action="">
+                      <input class="flip-card__input" name="email" placeholder="Email" type="email">
+                      <input class="flip-card__input" name="password" placeholder="Password" type="password">
+                      <button class="flip-card__btn">Let`s go!</button>
+                   </form>
+                </div>
+                <div class="flip-card__back">
+                   <div class="title">Sign up</div>
+                   <form class="flip-card__form" action="">
+                      <input class="flip-card__input" placeholder="Name" type="name">
+                      <input class="flip-card__input" name="email" placeholder="Email" type="email">
+                      <input class="flip-card__input" name="password" placeholder="Password" type="password">
+                      <button class="flip-card__btn">Confirm!</button>
+                   </form>
+                </div>
+             </div>
+          </label>
+      </div>   
+  </div>
+  </div>
 </body>
 </html>
