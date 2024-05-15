@@ -4,7 +4,6 @@
   justify-content: space-between; 
   gap: 20px;
   padding: 10px; 
-  /*background: #e0e0e0; (couleur de fond faux que tu me donne ton avis*/
 }
 
 .logo {
@@ -48,4 +47,34 @@
   border: none;
   background: transparent;
   padding: 5px;
+}
+
+.image-slider {
+  width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: 20px 0;
+  scrollbar-width: none;
+}
+
+.slider-container {
+  display: flex;
+}
+
+.slider-container img {
+  flex-shrink: 0;
+  width: 200px; 
+  height: auto;
+  margin-right: 20px; /* Espacement entre les images */
+  border-radius: 8px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* Ombre portée */
+  transition: transform 0.3s ease; /* Animation de transition */
+}
+
+.slider-container img:last-child {
+  margin-right: 0; /* Supprime l'espacement à droite de la dernière image */
+}
+
+.slider-container img:hover {
+  transform: scale(1.05); /* Zoom sur l'image au survol */
 }
