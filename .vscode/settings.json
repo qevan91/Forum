@@ -1,0 +1,12 @@
+{
+    "liveServer.settings.port": 5501,
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "${workspaceFolder:Forum}/accounts.db",
+            "name": "test"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
+}
