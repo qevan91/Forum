@@ -12,10 +12,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+//var isCo bool = false
+
 var errorAuth bool = false
 var errorLanding bool = false
-var errorPost bool = false
-var errorCategories bool = false
 var errorInside bool = false
 var errorAbout bool = false
 var errorCreate bool = false
@@ -53,17 +53,56 @@ func landing(w http.ResponseWriter, r *http.Request) {
 }
 
 func post(w http.ResponseWriter, r *http.Request) {
+	categories, err := getCategories()
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Error getting categories", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Categories []string
+	}{
+		Categories: categories,
+	}
+
+	if r.Method == "POST" {
+		category := r.FormValue("categories")
+		message := r.FormValue("message")
+
+		db, err := sql.Open("sqlite3", "./database.db")
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Database connection error", http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		_, err = db.Exec("INSERT INTO posts (category, message) VALUES (?, ?)", category, message)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Error inserting post", http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, "/home", http.StatusSeeOther)
+		return
+	}
+
 	tmpl := template.Must(template.ParseFiles("src/templates/post.html"))
-	tmpl.Execute(w, errorPost)
-	/*input := r.Form.Get("Input")
-	  if input == "Text" {
-	      fmt.Println("Ya des soucis")
-	  }*/
+	tmpl.Execute(w, data)
 }
 
 func categories(w http.ResponseWriter, r *http.Request) {
+	categories, err := getCategories()
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Error retrieving categories", http.StatusInternalServerError)
+		return
+	}
+
 	tmpl := template.Must(template.ParseFiles("src/templates/categories.html"))
-	tmpl.Execute(w, errorCategories)
+	tmpl.Execute(w, categories)
 }
 
 func inside(w http.ResponseWriter, r *http.Request) {
@@ -72,6 +111,29 @@ func inside(w http.ResponseWriter, r *http.Request) {
 }
 
 func create(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		name := r.FormValue("TopicName")
+		description := r.FormValue("Description")
+
+		db, err := sql.Open("sqlite3", "./database.db")
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Database connection error", http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		_, err = db.Exec("INSERT INTO categories (name, description) VALUES (?, ?)", name, description)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Error inserting category", http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, "/home", http.StatusSeeOther)
+		return
+	}
+
 	tmpl := template.Must(template.ParseFiles("src/templates/newtopic.html"))
 	tmpl.Execute(w, errorCreate)
 }
@@ -91,8 +153,39 @@ func parameter(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, errorParameter)
 }
 
+func getCategories() ([]string, error) {
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT name FROM categories")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var categories []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		categories = append(categories, name)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return categories, nil
+}
+
 func main() {
 	SetupDatabase()
+	SetupDatabase2()
+	SetupDatabase3()
+
 	http.Handle("/home", http.HandlerFunc(landing))
 	http.Handle("/auth", http.HandlerFunc(auth))
 	http.Handle("/post", http.HandlerFunc(post))
@@ -102,8 +195,17 @@ func main() {
 	http.Handle("/create", http.HandlerFunc(create))
 	http.Handle("/user", http.HandlerFunc(user))
 	http.Handle("/parameter", http.HandlerFunc(parameter))
-	Open("http://localhost/home")
-	http.ListenAndServe("", nil)
+
+	fmt.Println("Server is starting at http://localhost:8080")
+	err := Open("http://localhost:8080/home")
+	if err != nil {
+		log.Printf("Failed to open URL: %v\n", err)
+	}
+
+	err = http.ListenAndServe(":8080", nil)
+	if err != nil {
+		log.Fatalf("Server failed to start: %v\n", err)
+	}
 }
 
 func Open(url string) error {
@@ -142,5 +244,45 @@ func SetupDatabase() {
 		log.Fatal(err)
 	}
 
+	fmt.Println("Database setup completed.")
+}
+
+func SetupDatabase2() {
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        description TEXT
+	)`)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Database setup completed.")
+}
+
+func SetupDatabase3() {
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS posts (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER NOT NULL,
+		category_id INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        created_at DATETIME NOT NULL,
+		FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (category_id) REFERENCES categories(id)
+	)`)
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println("Database setup completed.")
 }

@@ -4,8 +4,8 @@
         {
             "previewLimit": 50,
             "driver": "SQLite",
-            "database": "${workspaceFolder:Forum}/accounts.db",
-            "name": "test"
+            "database": "${workspaceFolder:Forum}/database.db",
+            "name": "Forum"
         }
     ],
     "sqltools.useNodeRuntime": true
