@@ -15,15 +15,11 @@
       </a>
       <div class="search">
         <form>
-            <input
-                type="text"
-                required=""
-                name="search"
-                placeholder="Search for an anime or a topic"
-            />
-            <button type="submit"><span class="search-icon material-symbols-outlined">search</span></button>
-        </form>
-    </div>
+          <div class="search">
+          <span class="search-icon material-symbols-outlined">search</span>
+          <input class="search-input" type="search" placeholder="Search" />
+          </div>
+      </div>
       <div class="account">
         <a href="login.html">
             <img class="account_logo" src="/img/account_logo.jpg" alt="img du compte" />
@@ -48,13 +44,13 @@
                    </form>
                 </div>
                 <div class="flip-card__back">
-                   <div class="title">Sign up</div>
-                   <form class="flip-card__form" action="">
-                      <input class="flip-card__input" placeholder="Name" type="name">
+                  <div class="title">Sign up</div>
+                  <form class="flip-card__form" action="/signup" method="post">
+                      <input class="flip-card__input" placeholder="Username" name="username" type="text">
                       <input class="flip-card__input" name="email" placeholder="Email" type="email">
                       <input class="flip-card__input" name="password" placeholder="Password" type="password">
                       <button class="flip-card__btn">Confirm!</button>
-                   </form>
+                  </form>
                 </div>
              </div>
           </label>
