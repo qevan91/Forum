@@ -1,13 +1,17 @@
 package main
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os/exec"
 	"runtime"
+	"sync"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -15,12 +19,97 @@ import (
 //var isCo bool = false
 
 var errorAuth bool = false
-var errorLanding bool = false
-var errorInside bool = false
 var errorAbout bool = false
 var errorCreate bool = false
 var errorUser bool = false
 var errorParameter bool = false
+
+type Session struct {
+	Username string
+	Expiry   time.Time
+}
+
+type Post struct {
+	ID         int
+	UserID     int
+	CategoryID int
+	Content    string
+	CreatedAt  time.Time
+}
+
+var sessionStore = struct {
+	sync.RWMutex
+	sessions map[string]Session
+}{
+	sessions: make(map[string]Session),
+}
+
+func generateSessionID() (string, error) {
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(b), nil
+}
+
+func createSession(w http.ResponseWriter, username string) (string, error) {
+	sessionID, err := generateSessionID()
+	if err != nil {
+		return "", err
+	}
+
+	expiry := time.Now().Add(24 * time.Hour)
+
+	sessionStore.Lock()
+	sessionStore.sessions[sessionID] = Session{
+		Username: username,
+		Expiry:   expiry,
+	}
+	sessionStore.Unlock()
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_token",
+		Value:   sessionID,
+		Expires: expiry,
+	})
+
+	return sessionID, nil
+}
+
+func validateSession(r *http.Request) (*Session, error) {
+	cookie, err := r.Cookie("session_token")
+	if err != nil {
+		return nil, err
+	}
+
+	sessionStore.RLock()
+	session, exists := sessionStore.sessions[cookie.Value]
+	sessionStore.RUnlock()
+
+	if !exists || session.Expiry.Before(time.Now()) {
+		return nil, fmt.Errorf("session invalid or expired")
+	}
+
+	return &session, nil
+}
+
+func deleteSession(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("session_token")
+	if err != nil {
+		return
+	}
+
+	sessionStore.Lock()
+	delete(sessionStore.sessions, cookie.Value)
+	sessionStore.Unlock()
+
+	http.SetCookie(w, &http.Cookie{
+		Name:   "session_token",
+		Value:  "",
+		MaxAge: -1,
+	})
+}
 
 func auth(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
@@ -34,9 +123,45 @@ func auth(w http.ResponseWriter, r *http.Request) {
 		}
 		defer db.Close()
 
-		_, err = db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", username, email, password)
-		if err != nil {
-			log.Fatal(err)
+		if username != "" && email != "" && password != "" {
+			_, err = db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", username, email, password)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			_, err = createSession(w, username)
+			if err != nil {
+				http.Error(w, "Impossible de créer la session", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		if username != "" && email == "" && password != "" {
+			var storedPassword string
+			err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&storedPassword)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					http.Error(w, "Utilisateur non trouvé", http.StatusUnauthorized)
+					return
+				}
+				http.Error(w, "Erreur de serveur", http.StatusInternalServerError)
+				return
+			}
+
+			if password != storedPassword {
+				http.Error(w, "Mot de passe incorrect", http.StatusUnauthorized)
+				return
+			}
+
+			_, err = createSession(w, username)
+			if err != nil {
+				http.Error(w, "Impossible de créer la session", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		if username == "" && email == "" && password == "" {
+			deleteSession(w, r)
 		}
 
 		http.Redirect(w, r, "/home", http.StatusSeeOther)
@@ -47,9 +172,25 @@ func auth(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, errorAuth)
 }
 
+type LandingData struct {
+	Username string
+	Error    string
+}
+
 func landing(w http.ResponseWriter, r *http.Request) {
+	session, err := validateSession(r)
+	data := LandingData{}
+
+	if err != nil {
+		data.Error = "Vous devez vous connecter"
+	} else {
+		data.Username = session.Username
+	}
+
 	tmpl := template.Must(template.ParseFiles("src/templates/landing.html"))
-	tmpl.Execute(w, errorLanding)
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, "Erreur interne du serveur", http.StatusInternalServerError)
+	}
 }
 
 func post(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +211,18 @@ func post(w http.ResponseWriter, r *http.Request) {
 		category := r.FormValue("categories")
 		message := r.FormValue("message")
 
+		categoryID, err := getCategoryIDByName(category)
+		if err != nil {
+			http.Error(w, "Can't access have the name", http.StatusInternalServerError)
+			return
+		}
+
+		session, err := validateSession(r)
+		if err != nil {
+			http.Error(w, "You must be logged in to post", http.StatusUnauthorized)
+			return
+		}
+
 		db, err := sql.Open("sqlite3", "./database.db")
 		if err != nil {
 			log.Println(err)
@@ -78,7 +231,15 @@ func post(w http.ResponseWriter, r *http.Request) {
 		}
 		defer db.Close()
 
-		_, err = db.Exec("INSERT INTO posts (category, message) VALUES (?, ?)", category, message)
+		var userName string
+		err = db.QueryRow("SELECT username FROM users WHERE username = ?", session.Username).Scan(&userName)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Error retrieving user ID", http.StatusInternalServerError)
+			return
+		}
+
+		_, err = db.Exec("INSERT INTO posts (user_id, category_id, content) VALUES (?, ?, ?)", userName, categoryID, message)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Error inserting post", http.StatusInternalServerError)
@@ -91,6 +252,22 @@ func post(w http.ResponseWriter, r *http.Request) {
 
 	tmpl := template.Must(template.ParseFiles("src/templates/post.html"))
 	tmpl.Execute(w, data)
+}
+
+func getCategoryIDByName(categoryName string) (int, error) {
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		return 0, err
+	}
+	defer db.Close()
+
+	var categoryID int
+	err = db.QueryRow("SELECT id FROM categories WHERE name = ?", categoryName).Scan(&categoryID)
+	if err != nil {
+		return 0, err
+	}
+
+	return categoryID, nil
 }
 
 func categories(w http.ResponseWriter, r *http.Request) {
@@ -106,8 +283,15 @@ func categories(w http.ResponseWriter, r *http.Request) {
 }
 
 func inside(w http.ResponseWriter, r *http.Request) {
+	categories, err := getPost()
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Error retrieving categories", http.StatusInternalServerError)
+		return
+	}
+
 	tmpl := template.Must(template.ParseFiles("src/templates/inside.html"))
-	tmpl.Execute(w, errorInside)
+	tmpl.Execute(w, categories)
 }
 
 func create(w http.ResponseWriter, r *http.Request) {
@@ -181,10 +365,38 @@ func getCategories() ([]string, error) {
 	return categories, nil
 }
 
+func getPost() ([]string, error) {
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT content FROM posts")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []string
+	for rows.Next() {
+		var content string
+		if err := rows.Scan(&content); err != nil {
+			return nil, err
+		}
+		posts = append(posts, content)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+
 func main() {
 	SetupDatabase()
 	SetupDatabase2()
-	SetupDatabase3()
+	SetupDatabasePost()
 
 	http.Handle("/home", http.HandlerFunc(landing))
 	http.Handle("/auth", http.HandlerFunc(auth))
@@ -266,23 +478,25 @@ func SetupDatabase2() {
 	fmt.Println("Database setup completed.")
 }
 
-func SetupDatabase3() {
+func SetupDatabasePost() {
 	db, err := sql.Open("sqlite3", "./database.db")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
+
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS posts (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		user_id INTEGER NOT NULL,
 		category_id INTEGER NOT NULL,
-        content TEXT NOT NULL,
-        created_at DATETIME NOT NULL,
-		FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (category_id) REFERENCES categories(id)
+		content TEXT NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY(user_id) REFERENCES users(id),
+		FOREIGN KEY(category_id) REFERENCES categories(id)
 	)`)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Database setup completed.")
+
+	fmt.Println("Post database setup completed.")
 }

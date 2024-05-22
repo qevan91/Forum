@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="/src/css/styles.css" />
     <title>landing</title>
-  </head>
-  <body>
+</head>
+<body>
     <h1>ForAnime</h1>
+    {{if .Username}}
+        <p>Bienvenue {{.Username}}!</p>
+    {{else}}
+        <p>{{.Error}}</p>
+    {{end}}
     <form>
-        <input
-        type="text"
-        required=""
-        name="search"
-        placeholder="search an anime or a topic"
-        />
+        <input type="text" required="" name="search" placeholder="search an anime or a topic" />
     </form>
-    <br></br>
+    <br />
     <a href="auth">Sign in</a>
     <a href="user">Profile</a>
     <a href="parameter">Parameter</a>
@@ -24,5 +24,5 @@
     <a href="categories">Categories</a>
     <button type="Click" onclick="window.location='create';">New Topic</button>
     <button type="Click" onclick="window.location='post';">New Post</button>
-  </body>
+</body>
 </html>
