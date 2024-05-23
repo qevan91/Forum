@@ -211,12 +211,6 @@ func post(w http.ResponseWriter, r *http.Request) {
 		category := r.FormValue("categories")
 		message := r.FormValue("message")
 
-		categoryID, err := getCategoryIDByName(category)
-		if err != nil {
-			http.Error(w, "Can't access have the name", http.StatusInternalServerError)
-			return
-		}
-
 		session, err := validateSession(r)
 		if err != nil {
 			http.Error(w, "You must be logged in to post", http.StatusUnauthorized)
@@ -239,7 +233,7 @@ func post(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, err = db.Exec("INSERT INTO posts (user_id, category_id, content) VALUES (?, ?, ?)", userName, categoryID, message)
+		_, err = db.Exec("INSERT INTO posts (user_id, category_id, content) VALUES (?, ?, ?)", userName, category, message)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Error inserting post", http.StatusInternalServerError)
@@ -252,22 +246,6 @@ func post(w http.ResponseWriter, r *http.Request) {
 
 	tmpl := template.Must(template.ParseFiles("src/templates/post.html"))
 	tmpl.Execute(w, data)
-}
-
-func getCategoryIDByName(categoryName string) (int, error) {
-	db, err := sql.Open("sqlite3", "./database.db")
-	if err != nil {
-		return 0, err
-	}
-	defer db.Close()
-
-	var categoryID int
-	err = db.QueryRow("SELECT id FROM categories WHERE name = ?", categoryName).Scan(&categoryID)
-	if err != nil {
-		return 0, err
-	}
-
-	return categoryID, nil
 }
 
 func categories(w http.ResponseWriter, r *http.Request) {
@@ -393,28 +371,82 @@ func getPost() ([]string, error) {
 	return posts, nil
 }
 
-// Function to handle the dynamic category pages
 func categoryPageHandler(w http.ResponseWriter, r *http.Request) {
-	// Extract the category name from the URL
 	categoryName := r.URL.Path[len("/categories/"):]
 
-	// Create a template for the category page
+	posts, err := getPostsByCategory(categoryName)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Error retrieving posts", http.StatusInternalServerError)
+		return
+	}
+
 	categoryTmpl := `
-		<!DOCTYPE html>
-		<html lang="en">
-		<head>
-			<meta charset="UTF-8">
-			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<title>{{.}}</title>
-		</head>
-		<body>
-			<h1>Welcome to the {{.}} category page!</h1>
-		</body>
-		</html>
-	`
-	// Parse and execute the template
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>{{.Category}}</title>
+        </head>
+        <body>
+            <h1>Welcome to the {{.Category}} category page!</h1>
+            <h2>Posts:</h2>
+            <ul>
+                {{range .Posts}}
+                    <li>{{.}}
+                        <button type="button" onclick="goToDiscussion('{{.}}')">Discussion</button>
+                    </li>
+                {{end}}
+            </ul>
+            <script>
+                function goToDiscussion(post) {
+                    var encodedPost = encodeURIComponent(post);
+                    window.location = '/discussion?post=' + encodedPost;
+                }
+            </script>
+        </body>
+        </html>
+    `
+
+	data := struct {
+		Category string
+		Posts    []string
+	}{
+		Category: categoryName,
+		Posts:    posts,
+	}
+
 	tmpl := template.Must(template.New("category").Parse(categoryTmpl))
-	tmpl.Execute(w, categoryName)
+	tmpl.Execute(w, data)
+}
+
+func getPostsByCategory(categoryName string) ([]string, error) {
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT content FROM posts WHERE category_id = ?", categoryName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []string
+	for rows.Next() {
+		var content string
+		if err := rows.Scan(&content); err != nil {
+			return nil, err
+		}
+		posts = append(posts, content)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
 }
 
 func main() {
