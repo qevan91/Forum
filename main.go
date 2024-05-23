@@ -23,6 +23,7 @@ var errorAbout bool = false
 var errorCreate bool = false
 var errorUser bool = false
 var errorParameter bool = false
+var errorDiscussion bool = false
 
 type Session struct {
 	Username string
@@ -211,11 +212,11 @@ func post(w http.ResponseWriter, r *http.Request) {
 		category := r.FormValue("categories")
 		message := r.FormValue("message")
 
-		categoryID, err := getCategoryIDByName(category)
-		if err != nil {
-			http.Error(w, "Can't access have the name", http.StatusInternalServerError)
-			return
-		}
+		// categoryID, err := getCategoryIDByName(category)
+		// if err != nil {
+		// 	http.Error(w, "Can't access have the name", http.StatusInternalServerError)
+		// 	return
+		// }
 
 		session, err := validateSession(r)
 		if err != nil {
@@ -239,7 +240,7 @@ func post(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, err = db.Exec("INSERT INTO posts (user_id, category_id, content) VALUES (?, ?, ?)", userName, categoryID, message)
+		_, err = db.Exec("INSERT INTO posts (user_id, category_id, content) VALUES (?, ?, ?)", userName, category, message)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Error inserting post", http.StatusInternalServerError)
@@ -254,21 +255,21 @@ func post(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, data)
 }
 
-func getCategoryIDByName(categoryName string) (int, error) {
-	db, err := sql.Open("sqlite3", "./database.db")
-	if err != nil {
-		return 0, err
-	}
-	defer db.Close()
+// func getCategoryIDByName(categoryName string) (int, error) {
+// 	db, err := sql.Open("sqlite3", "./database.db")
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	defer db.Close()
 
-	var categoryID int
-	err = db.QueryRow("SELECT id FROM categories WHERE name = ?", categoryName).Scan(&categoryID)
-	if err != nil {
-		return 0, err
-	}
+// 	var categoryID int
+// 	err = db.QueryRow("SELECT id FROM categories WHERE name = ?", categoryName).Scan(&categoryID)
+// 	if err != nil {
+// 		return 0, err
+// 	}
 
-	return categoryID, nil
-}
+// 	return categoryID, nil
+// }
 
 func categories(w http.ResponseWriter, r *http.Request) {
 	categories, err := getCategories()
@@ -283,15 +284,33 @@ func categories(w http.ResponseWriter, r *http.Request) {
 }
 
 func inside(w http.ResponseWriter, r *http.Request) {
-	categories, err := getPost()
+	posts, err := getPost()
 	if err != nil {
-		log.Println(err)
+		log.Println("Error retrieving posts:", err)
+		http.Error(w, "Error retrieving posts", http.StatusInternalServerError)
+		return
+	}
+
+	categories, err := getCategories()
+	if err != nil {
+		log.Println("Error retrieving categories:", err)
 		http.Error(w, "Error retrieving categories", http.StatusInternalServerError)
 		return
 	}
 
+	data := struct {
+		Posts      []string
+		Categories []string
+	}{
+		Posts:      posts,
+		Categories: categories,
+	}
+
 	tmpl := template.Must(template.ParseFiles("src/templates/inside.html"))
-	tmpl.Execute(w, categories)
+	if err := tmpl.Execute(w, data); err != nil {
+		log.Println("Error executing template:", err)
+		http.Error(w, "Error executing template", http.StatusInternalServerError)
+	}
 }
 
 func create(w http.ResponseWriter, r *http.Request) {
@@ -335,6 +354,11 @@ func user(w http.ResponseWriter, r *http.Request) {
 func parameter(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("src/templates/parameter.html"))
 	tmpl.Execute(w, errorParameter)
+}
+
+func disc(w http.ResponseWriter, r *http.Request) {
+	tmpl := template.Must(template.ParseFiles("src/templates/disc.html"))
+	tmpl.Execute(w, errorDiscussion)
 }
 
 func getCategories() ([]string, error) {
@@ -404,6 +428,7 @@ func main() {
 	http.Handle("/categories", http.HandlerFunc(categories))
 	http.Handle("/inside", http.HandlerFunc(inside))
 	http.Handle("/about", http.HandlerFunc(about))
+	http.Handle("/discussion", http.HandlerFunc(disc))
 	http.Handle("/create", http.HandlerFunc(create))
 	http.Handle("/user", http.HandlerFunc(user))
 	http.Handle("/parameter", http.HandlerFunc(parameter))
