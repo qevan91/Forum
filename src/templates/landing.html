@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="/src/css/landing.css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" /> <!-- icone de recherche -->
-    <title>Landing</title>
+    <title>landing</title>
   </head>
   <body>
     <form>
@@ -16,37 +16,37 @@
             <ul>
               <li>
                 <div class="button">
-                  <a href="about.html"><p class="p">about</p></a>
+                  <a href="about"><p class="p">about</p></a>
                 </div>
               </li>
               <li>
                 <div class="button">
-                  <a href="categories.html"><p class="p">catégorie</p></a>
+                  <a href="categories"><p class="p">catégorie</p></a>
                 </div>
               </li>
               <li>
                 <div class="button">
-                  <a href="inside.html"><p class="p">inside</p></a>
+                  <a href="inside"><p class="p">inside</p></a>
                 </div>
               </li>
               <li>
                 <div class="button">
-                  <a href="newtopic.html"><p class="p">newtopic</p></a>
+                  <a href="newtopic"><p class="p">newtopic</p></a>
                 </div>
               </li>
               <li>
                 <div class="button">
-                  <a href="post.html"><p class="p">post</p></a>
+                  <a href="post"><p class="p">post</p></a>
                 </div>
               </li>
               <li>
                 <div class="button">
-                  <a href="user.html"><p class="p">user</p></a>
+                  <a href="user"><p class="p">user</p></a>
                 </div>
               </li>
               <li>
                 <div class="button">
-                  <a href="parameter.html"><p class="p">parameter</p></a>
+                  <a href="parameter"><p class="p">parameter</p></a>
                 </div>
               </li>
             </ul>              
@@ -58,12 +58,17 @@
           <input class="search-input" type="search" placeholder="Search" />
         </div>
         <div class="account">
-          <a href="auth.html">
+          <a href="auth">
               <img class="account_logo" src="/src/img/account_logo.jpg" alt="img du compte" />
           </a>
       </div>
     </div>
     </form>
+    {{if .Username}}
+        <p>Bienvenue {{.Username}}!</p>
+    {{else}}
+        <p>{{.Error}}</p>
+    {{end}}
     <br/>
     <br/>
     <br/>
@@ -72,7 +77,7 @@
     <div class="image-slider">
       <div class="slider-container">
         <img src="/src/img/anime/demon-slayer.jpg" alt="Demon Slayer">
-        <img src="/src/img/anime/jjk.jpg" alt="Jujutsu Kaisen">²
+        <img src="/src/img/anime/jjk.jpg" alt="Jujutsu Kaisen">
         <img src="/src/img/anime/mha.png" alt="My Hero Academia">
         <img src="/src/img/anime/one_piece.jpg" alt="One Piece">
         <img src="/src/img/anime/solo-leveling.png" alt="Solo Leveling">
