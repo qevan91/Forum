@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/src/css/styles.css">
+    <title>post</title>
+</head>
+<body>
+    <h1>ForAnime</h1>
+    <form action="/post" method="post">
+        <select name="categories" id="categories-select">
+            <option value="">-- Please choose a category --</option>
+            {{range .Categories}}
+            <option value="{{.}}">{{.}}</option>
+            {{end}}
+        </select>
+        <br><br>
+        <input type="text" required="" name="message" placeholder="Enter your message">
+        <br><br>
+        <button type="Submit">Submit</button>
+    </form>
+</body>
+</html>
