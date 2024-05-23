@@ -393,6 +393,30 @@ func getPost() ([]string, error) {
 	return posts, nil
 }
 
+// Function to handle the dynamic category pages
+func categoryPageHandler(w http.ResponseWriter, r *http.Request) {
+	// Extract the category name from the URL
+	categoryName := r.URL.Path[len("/categories/"):]
+
+	// Create a template for the category page
+	categoryTmpl := `
+		<!DOCTYPE html>
+		<html lang="en">
+		<head>
+			<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<title>{{.}}</title>
+		</head>
+		<body>
+			<h1>Welcome to the {{.}} category page!</h1>
+		</body>
+		</html>
+	`
+	// Parse and execute the template
+	tmpl := template.Must(template.New("category").Parse(categoryTmpl))
+	tmpl.Execute(w, categoryName)
+}
+
 func main() {
 	SetupDatabase()
 	SetupDatabase2()
@@ -402,6 +426,7 @@ func main() {
 	fs := http.FileServer(http.Dir("src"))
 	http.Handle("/src/", http.StripPrefix("/src/", fs))
 
+	http.HandleFunc("/categories/", categoryPageHandler)
 	http.Handle("/home", http.HandlerFunc(landing))
 	http.Handle("/auth", http.HandlerFunc(auth))
 	http.Handle("/post", http.HandlerFunc(post))

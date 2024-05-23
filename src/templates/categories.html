@@ -11,7 +11,9 @@
     <ul>
         {{range .}}
         <li>
-            <h2>{{.}}</h2>
+            <a href="/categories/{{.}}">
+                <h2>{{.}}</h2>
+            </a>
         </li>
         {{end}}
     </ul>
