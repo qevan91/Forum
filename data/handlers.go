@@ -10,7 +10,6 @@ import (
 var errorAuth bool = false
 var errorAbout bool = false
 var errorCreate bool = false
-var errorUser bool = false
 var errorParameter bool = false
 
 func Auth(w http.ResponseWriter, r *http.Request) {
@@ -208,8 +207,80 @@ func About(w http.ResponseWriter, r *http.Request) {
 }
 
 func User(w http.ResponseWriter, r *http.Request) {
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	session, err := validateSession(r)
+	if err != nil {
+		http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
+		return
+	}
+
+	username := session.Username
+
+	var email string
+	err = db.QueryRow("SELECT email FROM users WHERE username = ?", username).Scan(&email)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Error retrieving user email", http.StatusInternalServerError)
+		return
+	}
+
+	currentUsername := session.Username
+	newEmail := r.FormValue("email")
+	newUsername := r.FormValue("username")
+
+	if newEmail != "" {
+		_, err = db.Exec("UPDATE users SET email = ? WHERE username = ?", newEmail, currentUsername)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Error updating email", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if newUsername != "" {
+		var existingUser string
+		err = db.QueryRow("SELECT username FROM users WHERE username = ?", newUsername).Scan(&existingUser)
+		if err == nil {
+			http.Error(w, "Le nom d'utilisateur est déjà pris", http.StatusConflict)
+			return
+		} else if err != sql.ErrNoRows {
+			log.Println(err)
+			http.Error(w, "Erreur de serveur", http.StatusInternalServerError)
+			return
+		}
+
+		_, err = db.Exec("UPDATE users SET username = ? WHERE username = ?", newUsername, currentUsername)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Error updating username", http.StatusInternalServerError)
+			return
+		}
+
+		session.Username = newUsername
+		deleteSession(w, r)
+		_, err = createSession(w, newUsername)
+		if err != nil {
+			http.Error(w, "Impossible de créer la session", http.StatusInternalServerError)
+			return
+		}
+	}
+
 	tmpl := template.Must(template.ParseFiles("src/templates/user.html"))
-	tmpl.Execute(w, errorUser)
+	data := struct {
+		Username string
+		Email    string
+	}{
+		Username: username,
+		Email:    email,
+	}
+	tmpl.Execute(w, data)
 }
 
 func Parameter(w http.ResponseWriter, r *http.Request) {
