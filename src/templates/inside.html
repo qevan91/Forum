@@ -8,10 +8,10 @@
 </head>
 <body>
     <h1>ForAnime</h1>
-    {{range .}}
-    <li>
-        <h2>{{.}}</h2>
-    </li>
-    {{end}}
+    <ul>
+        {{range $index, $post := .Posts}}
+            <li>{{index $.Usernames $index}}: {{$post}}</li>
+        {{end}}
+    </ul>
 </body>
 </html>

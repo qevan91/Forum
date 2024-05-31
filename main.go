@@ -19,7 +19,7 @@ func main() {
 	fs := http.FileServer(http.Dir("src"))
 	http.Handle("/src/", http.StripPrefix("/src/", fs))
 
-	http.HandleFunc("/categories/", data.CategoryPageHandler)
+	http.Handle("/categories/", http.HandlerFunc(data.Categopost))
 	http.Handle("/home", http.HandlerFunc(data.Landing))
 	http.Handle("/auth", http.HandlerFunc(data.Auth))
 	http.Handle("/post", http.HandlerFunc(data.Post))

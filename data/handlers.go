@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"path/filepath"
+	"strings"
 )
 
 var errorAuth bool = false
@@ -126,15 +128,15 @@ func Post(w http.ResponseWriter, r *http.Request) {
 		}
 		defer db.Close()
 
-		var userName string
-		err = db.QueryRow("SELECT username FROM users WHERE username = ?", session.Username).Scan(&userName)
+		var user_ID int
+		err = db.QueryRow("SELECT id FROM users WHERE username = ?", session.Username).Scan(&user_ID)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Error retrieving user ID", http.StatusInternalServerError)
 			return
 		}
 
-		_, err = db.Exec("INSERT INTO posts (user_id, category_id, content) VALUES (?, ?, ?)", userName, category, message)
+		_, err = db.Exec("INSERT INTO posts (user_id, category_id, content) VALUES (?, ?, ?)", user_ID, category, message)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Error inserting post", http.StatusInternalServerError)
@@ -148,7 +150,6 @@ func Post(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("src/templates/post.html"))
 	tmpl.Execute(w, data)
 }
-
 func Categories(w http.ResponseWriter, r *http.Request) {
 	categories, err := getCategories()
 	if err != nil {
@@ -288,52 +289,50 @@ func Parameter(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, errorParameter)
 }
 
-func CategoryPageHandler(w http.ResponseWriter, r *http.Request) {
-	categoryName := r.URL.Path[len("/categories/"):]
+func Categopost(w http.ResponseWriter, r *http.Request) {
+	categoryName := strings.TrimPrefix(r.URL.Path, "/categories/")
+	log.Println("Category:", categoryName)
 
-	posts, err := getPostsByCategory(categoryName)
+	posts, userIDs, err := getPostsByCategory(categoryName)
 	if err != nil {
-		log.Println(err)
+		log.Println("Error retrieving posts:", err)
 		http.Error(w, "Error retrieving posts", http.StatusInternalServerError)
 		return
 	}
 
-	categoryTmpl := `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>{{.Category}}</title>
-        </head>
-        <body>
-            <h1>Welcome to the {{.Category}} category page!</h1>
-            <h2>Posts:</h2>
-            <ul>
-                {{range .Posts}}
-                    <li>{{.}}
-                        <button type="button" onclick="goToDiscussion('{{.}}')">Discussion</button>
-                    </li>
-                {{end}}
-            </ul>
-            <script>
-                function goToDiscussion(post) {
-                    var encodedPost = encodeURIComponent(post);
-                    window.location = '/discussion?post=' + encodedPost;
-                }
-            </script>
-        </body>
-        </html>
-    `
-
-	data := struct {
-		Category string
-		Posts    []string
-	}{
-		Category: categoryName,
-		Posts:    posts,
+	var usernames []string
+	for _, userID := range userIDs {
+		username, err := getUsernameByPostID(userID)
+		name := strings.Join(username, " ")
+		if err != nil {
+			log.Println("Error retrieving username:", err)
+			http.Error(w, "Error retrieving username", http.StatusInternalServerError)
+			return
+		}
+		usernames = append(usernames, name)
 	}
 
-	tmpl := template.Must(template.New("category").Parse(categoryTmpl))
-	tmpl.Execute(w, data)
+	tmplPath := filepath.Join("src/templates/inside.html")
+	tmpl, err := template.ParseFiles(tmplPath)
+	if err != nil {
+		log.Println("Error loading template:", err)
+		http.Error(w, "Error loading template", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Category  string
+		Posts     []string
+		Usernames []string
+	}{
+		Category:  categoryName,
+		Posts:     posts,
+		Usernames: usernames,
+	}
+
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		log.Println("Error rendering template:", err)
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+	}
 }
