@@ -312,7 +312,7 @@ func Categopost(w http.ResponseWriter, r *http.Request) {
 		usernames = append(usernames, name)
 	}
 
-	tmplPath := filepath.Join("src/templates/inside.html")
+	tmplPath := filepath.Join("src/templates/categopost.html")
 	tmpl, err := template.ParseFiles(tmplPath)
 	if err != nil {
 		log.Println("Error loading template:", err)
