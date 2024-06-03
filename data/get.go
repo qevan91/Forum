@@ -91,24 +91,6 @@ func getPostsByCategory(categoryName string) ([]string, []int, error) {
 
 	return posts, userIDs, nil
 }
-func getUserIDByPost(post string) (int, error) {
-	db, err := sql.Open("sqlite3", "./database.db")
-	if err != nil {
-		return 0, err
-	}
-	defer db.Close()
-
-	var userID int
-	err = db.QueryRow("SELECT user_id FROM posts").Scan(&userID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return 0, fmt.Errorf("aucun utilisateur trouvé pour le post ID")
-		}
-		return 0, err
-	}
-
-	return userID, nil
-}
 
 func getUsernameByPostID(ID int) ([]string, error) {
 	db, err := sql.Open("sqlite3", "./database.db")
@@ -141,4 +123,50 @@ func getUsernameByPostID(ID int) ([]string, error) {
 	}
 
 	return usernames, nil
+}
+
+func getUserByName(Username string) (int, []string, error) {
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		return 0, nil, err
+	}
+	defer db.Close()
+
+	row := db.QueryRow("SELECT id, created_at FROM users WHERE username = ?", Username)
+	var id int
+	var date string
+	if err := row.Scan(&id, &date); err != nil {
+		return 0, nil, err
+	}
+	dates := []string{date}
+	return id, dates, nil
+}
+
+func getPostByID(postID int) ([]string, error) {
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT content FROM posts WHERE user_id = ?", postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var content []string
+	for rows.Next() {
+		var post string
+		if err := rows.Scan(&post); err != nil {
+			return nil, err
+		}
+		content = append(content, post)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return content, nil
 }

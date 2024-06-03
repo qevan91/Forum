@@ -1,0 +1,50 @@
+  .logo {
+    width: 60px; 
+    height: 60px; 
+    border-radius: 50%; 
+  }
+  
+  h4 {
+    text-align: left;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 20px;
+  }
+  
+  input[type="email"], input[type="text"] {
+    width: 20%;
+    height: 20px;
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #000000;
+  }
+  
+  button[type="submit"] {
+    background-color: #000000;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  button[type="submit"]:hover {
+    background-color: #000000;
+  }
+  
+  .logout-button {
+    background-color: #ff0000;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .logout-button:hover {
+    background-color: #cc0000;
+  }

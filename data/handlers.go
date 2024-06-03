@@ -336,3 +336,33 @@ func Categopost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 	}
 }
+
+func OtherProfile(w http.ResponseWriter, r *http.Request) {
+	OtUsername := strings.TrimPrefix(r.URL.Path, "/profile/")
+
+	id, date, err := getUserByName(OtUsername)
+	if err != nil {
+		log.Println("Error retrieving user:", err)
+		http.Error(w, "Error retrieving user", http.StatusInternalServerError)
+		return
+	}
+
+	content, err := getPostByID(id)
+	if err != nil {
+		log.Println("Error retrieving posts:", err)
+		http.Error(w, "Error retrieving posts", http.StatusInternalServerError)
+		return
+	}
+
+	tmpl := template.Must(template.ParseFiles("src/templates/otherprofile.html"))
+	data := struct {
+		Dates    []string
+		Post     []string
+		Username string
+	}{
+		Dates:    date,
+		Post:     content,
+		Username: OtUsername,
+	}
+	tmpl.Execute(w, data)
+}

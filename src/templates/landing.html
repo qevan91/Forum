@@ -53,9 +53,15 @@
           <input class="search-input" type="search" placeholder="Search" />
         </div>
         <div class="account">
-          <a href="auth">
+          {{if .Username}}
+            <a href="user">
               <img class="account_logo" src="/src/img/account_logo.jpg" alt="img du compte" />
-          </a>
+            </a>
+          {{else}}
+            <a href="auth">
+              <img class="account_logo" src="/src/img/account_logo.jpg" alt="img du compte" />
+            </a>
+          {{end}}
       </div>
     </div>
     </form>
@@ -84,6 +90,4 @@
       </div>
     </div>
     <h2>Vos animes</h2>
-
-
 </body>

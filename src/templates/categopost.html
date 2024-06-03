@@ -42,10 +42,13 @@
         <div class="tweet-header">
             <img src="/src/img/account_logo.jpg" alt="Profile Picture" class="tweet-profile-pic">
             <div>
-                <span class="tweet-username">{{index $.Usernames $index}}</span>
+                <span class="tweet-username">
+                    <a href="/profile/{{index $.Usernames $index}}">{{index $.Usernames $index}}</a>
+                </span>
                 <span class="tweet-time">. 23h</span>
             </div>
         </div>
+        
         <div class="tweet-content">
             <p>{{$post}}</p>
         </div>

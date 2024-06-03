@@ -4,7 +4,17 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	// "time"
 )
+
+// type User struct {
+// 	ID        int
+// 	Username  string
+// 	Email     string
+// 	Password  string
+// 	Admin     string
+// 	CreatedAt time.Time
+// }
 
 func SetupDatabase() {
 	db, err := sql.Open("sqlite3", "./database.db")
@@ -18,7 +28,7 @@ func SetupDatabase() {
 		username TEXT UNIQUE,
 		email TEXT UNIQUE,
 		password TEXT NOT NULL,
-		admin BOOLEAN DEFAULT 0,
+		admin TEXT UNIQUE,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)`)
 	if err != nil {
@@ -80,9 +90,11 @@ func SetupDatabaseCommentary() {
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS commentaries (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		postID INTEGER NOT NULL,
+		user_id INTEGER NOT NULL,
 		content TEXT NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY(postID) REFERENCES posts(id)
+		FOREIGN KEY(postID) REFERENCES posts(id),
+		FOREIGN KEY(user_id) REFERENCES users(id)
 	)`)
 	if err != nil {
 		log.Fatal(err)

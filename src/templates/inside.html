@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/src/css/styles.css">
+    <link rel="stylesheet" href="/src/css/login.css">
     <title>post</title>
 </head>
 <body>
     <h1>ForAnime</h1>
     <ul>
         {{range $index, $post := .Posts}}
-            <li>{{index $.Usernames $index}}: {{$post}}</li>
+            <li><a href="/profile/{{index $.Usernames $index}}">{{index $.Usernames $index}}</a>: {{$post}}</li>
         {{end}}
     </ul>
 </body>

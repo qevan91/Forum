@@ -15,11 +15,13 @@ func main() {
 	data.SetupDatabase()
 	data.SetupDatabase2()
 	data.SetupDatabasePost()
+	data.SetupDatabaseCommentary()
 
 	fs := http.FileServer(http.Dir("src"))
 	http.Handle("/src/", http.StripPrefix("/src/", fs))
 
 	http.Handle("/categories/", http.HandlerFunc(data.Categopost))
+	http.Handle("/profile/", http.HandlerFunc(data.OtherProfile))
 	http.Handle("/home", http.HandlerFunc(data.Landing))
 	http.Handle("/auth", http.HandlerFunc(data.Auth))
 	http.Handle("/post", http.HandlerFunc(data.Post))
