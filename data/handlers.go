@@ -9,12 +9,18 @@ import (
 	"strings"
 )
 
-var errorAuth bool = false
 var errorAbout bool = false
 var errorCreate bool = false
 var errorParameter bool = false
 
+type AuthData struct {
+	Username string
+	Error    string
+}
+
 func Auth(w http.ResponseWriter, r *http.Request) {
+	data := AuthData{}
+
 	if r.Method == "POST" {
 		username := r.FormValue("username")
 		email := r.FormValue("email")
@@ -29,7 +35,9 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 		if username != "" && email != "" && password != "" {
 			_, err = db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", username, email, password)
 			if err != nil {
-				log.Fatal(err)
+				data.Error = "Erreur lors de l'inscription"
+				renderTemplate(w, data)
+				return
 			}
 
 			_, err = createSession(w, username)
@@ -37,14 +45,13 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "Impossible de créer la session", http.StatusInternalServerError)
 				return
 			}
-		}
-
-		if username != "" && email == "" && password != "" {
+		} else if username != "" && email == "" && password != "" {
 			var storedPassword string
 			err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&storedPassword)
 			if err != nil {
 				if err == sql.ErrNoRows {
-					http.Error(w, "Utilisateur non trouvé", http.StatusUnauthorized)
+					data.Error = "Identifiant incorrect"
+					renderTemplate(w, data)
 					return
 				}
 				http.Error(w, "Erreur de serveur", http.StatusInternalServerError)
@@ -52,7 +59,8 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if password != storedPassword {
-				http.Error(w, "Mot de passe incorrect", http.StatusUnauthorized)
+				data.Error = "Mot de passe incorrect"
+				renderTemplate(w, data)
 				return
 			}
 
@@ -63,16 +71,18 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		if username == "" && email == "" && password == "" {
-			deleteSession(w, r)
-		}
-
 		http.Redirect(w, r, "/home", http.StatusSeeOther)
 		return
 	}
 
+	renderTemplate(w, data)
+}
+
+func renderTemplate(w http.ResponseWriter, data AuthData) {
 	tmpl := template.Must(template.ParseFiles("src/templates/auth.html"))
-	tmpl.Execute(w, errorAuth)
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, "Erreur interne du serveur", http.StatusInternalServerError)
+	}
 }
 
 type LandingData struct {
@@ -207,7 +217,7 @@ func About(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, errorAbout)
 }
 
-func User(w http.ResponseWriter, r *http.Request) {
+func Users(w http.ResponseWriter, r *http.Request) {
 	db, err := sql.Open("sqlite3", "./database.db")
 	if err != nil {
 		log.Println(err)
@@ -232,44 +242,52 @@ func User(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currentUsername := session.Username
-	newEmail := r.FormValue("email")
-	newUsername := r.FormValue("username")
+	if r.Method == "POST" {
+		currentUsername := session.Username
+		newEmail := r.FormValue("email")
+		newUsername := r.FormValue("username")
 
-	if newEmail != "" {
-		_, err = db.Exec("UPDATE users SET email = ? WHERE username = ?", newEmail, currentUsername)
-		if err != nil {
-			log.Println(err)
-			http.Error(w, "Error updating email", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	if newUsername != "" {
-		var existingUser string
-		err = db.QueryRow("SELECT username FROM users WHERE username = ?", newUsername).Scan(&existingUser)
-		if err == nil {
-			http.Error(w, "Le nom d'utilisateur est déjà pris", http.StatusConflict)
-			return
-		} else if err != sql.ErrNoRows {
-			log.Println(err)
-			http.Error(w, "Erreur de serveur", http.StatusInternalServerError)
+		if newEmail == "" && newUsername == "" {
+			deleteSession(w, r)
+			http.Redirect(w, r, "/home", http.StatusSeeOther)
 			return
 		}
 
-		_, err = db.Exec("UPDATE users SET username = ? WHERE username = ?", newUsername, currentUsername)
-		if err != nil {
-			log.Println(err)
-			http.Error(w, "Error updating username", http.StatusInternalServerError)
-			return
+		if newEmail != "" {
+			_, err = db.Exec("UPDATE users SET email = ? WHERE username = ?", newEmail, currentUsername)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "Error updating email", http.StatusInternalServerError)
+				return
+			}
 		}
 
-		session.Username = newUsername
-		deleteSession(w, r)
-		_, err = createSession(w, newUsername)
-		if err != nil {
-			http.Error(w, "Impossible de créer la session", http.StatusInternalServerError)
-			return
+		if newUsername != "" {
+			var existingUser string
+			err = db.QueryRow("SELECT username FROM users WHERE username = ?", newUsername).Scan(&existingUser)
+			if err == nil {
+				http.Error(w, "Le nom d'utilisateur est déjà pris", http.StatusConflict)
+				return
+			} else if err != sql.ErrNoRows {
+				log.Println(err)
+				http.Error(w, "Erreur de serveur", http.StatusInternalServerError)
+				return
+			}
+
+			_, err = db.Exec("UPDATE users SET username = ? WHERE username = ?", newUsername, currentUsername)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "Error updating username", http.StatusInternalServerError)
+				return
+			}
+
+			session.Username = newUsername
+			deleteSession(w, r)
+			_, err = createSession(w, newUsername)
+			if err != nil {
+				http.Error(w, "Impossible de créer la session", http.StatusInternalServerError)
+				return
+			}
 		}
 	}
 

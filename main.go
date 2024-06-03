@@ -29,7 +29,7 @@ func main() {
 	http.Handle("/inside", http.HandlerFunc(data.Inside))
 	http.Handle("/about", http.HandlerFunc(data.About))
 	http.Handle("/create", http.HandlerFunc(data.Create))
-	http.Handle("/user", http.HandlerFunc(data.User))
+	http.Handle("/user", http.HandlerFunc(data.Users))
 	http.Handle("/parameter", http.HandlerFunc(data.Parameter))
 
 	fmt.Println("Server is starting at http://localhost:8080")

@@ -62,8 +62,10 @@
                 <span class="material-symbols-outlined" onclick="toggleReplyInput(this)">
                     forum
                 </span>
-                <input type="text" required="" name="reply-message" class="message-input reply-input" placeholder="Your reply">
-                <button onclick="submitReply(this)">Submit</button>
+                <form action="/post" method="post">
+                    <input type="text" required="" name="reply-message" class="message-input reply-input" placeholder="Your reply">
+                    <button onclick="submitReply(this)">Submit</button>
+                </form>
             </div>
         </div>
     </div>
