@@ -31,6 +31,20 @@
             display: block;
             opacity: 1;
         }
+      body {
+    background-color: white;
+    color: rgb(48, 48, 48);
+}
+h1 {
+    font-family: Arial, sans-serif;
+}
+body.dark-theme {
+    background-color:rgb(48, 48, 48);
+    color: white;
+}
+body {
+    transition: background-color 0.3s, color 0.3s;
+}
     </style>
     <title>{{.}}</title>
 </head>
@@ -83,5 +97,6 @@
             replyInput.classList.toggle('visible');
         }
     </script>
+    <script src="src/java/shadowMode.js"></script>
 </body>
 </html>

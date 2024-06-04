@@ -1,0 +1,50 @@
+.header {
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    gap: 20px;
+    padding: 10px; 
+}
+    
+.logo {
+    width: 60px; 
+    height: 60px; 
+    border-radius: 50%; 
+}
+.account_logo{
+    width: 60px; 
+    height: 60px; 
+    border-radius: 50%;
+}
+    
+.account {
+    display: flex; 
+    align-items: center;
+}
+    
+.account-icon {
+    font-size: 100px; 
+}
+    
+.search {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 28px;
+    background: #f6f6f6; 
+    gap: 10px; 
+}
+    
+.search-icon {
+    font-size: 24px; 
+}
+    
+.search-input {
+    font-size: 16px;
+    font-family: 'Lexend', sans-serif;
+    color: #333;
+    outline: none;
+    border: none;
+    background: transparent;
+    padding: 5px;
+}
