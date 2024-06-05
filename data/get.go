@@ -61,35 +61,38 @@ func getPost() ([]string, error) {
 	return posts, nil
 }
 
-func getPostsByCategory(categoryName string) ([]string, []int, error) {
+func getPostsByCategory(categoryName string) ([]string, []int, []int, error) {
 	db, err := sql.Open("sqlite3", "./database.db")
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	defer db.Close()
 
-	rows, err := db.Query("SELECT content, user_id FROM posts WHERE category_id = ?", categoryName)
+	rows, err := db.Query("SELECT id, content, user_id FROM posts WHERE category_id = ?", categoryName)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	defer rows.Close()
 
 	var posts []string
+	var postIDs []int
 	var userIDs []int
 	for rows.Next() {
+		var id int
 		var content string
 		var userID int
-		if err := rows.Scan(&content, &userID); err != nil {
-			return nil, nil, err
+		if err := rows.Scan(&id, &content, &userID); err != nil {
+			return nil, nil, nil, err
 		}
+		postIDs = append(postIDs, id)
 		posts = append(posts, content)
 		userIDs = append(userIDs, userID)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	return posts, userIDs, nil
+	return posts, postIDs, userIDs, nil
 }
 
 func getUsernameByPostID(ID int) ([]string, error) {

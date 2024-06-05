@@ -160,6 +160,7 @@ func Post(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("src/templates/post.html"))
 	tmpl.Execute(w, data)
 }
+
 func Categories(w http.ResponseWriter, r *http.Request) {
 	categories, err := getCategories()
 	if err != nil {
@@ -246,8 +247,9 @@ func Users(w http.ResponseWriter, r *http.Request) {
 		currentUsername := session.Username
 		newEmail := r.FormValue("email")
 		newUsername := r.FormValue("username")
+		newPassword := r.FormValue("password")
 
-		if newEmail == "" && newUsername == "" {
+		if newEmail == "" && newUsername == "" && newPassword == "" {
 			deleteSession(w, r)
 			http.Redirect(w, r, "/home", http.StatusSeeOther)
 			return
@@ -255,6 +257,15 @@ func Users(w http.ResponseWriter, r *http.Request) {
 
 		if newEmail != "" {
 			_, err = db.Exec("UPDATE users SET email = ? WHERE username = ?", newEmail, currentUsername)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "Error updating email", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		if newPassword != "" {
+			_, err = db.Exec("UPDATE users SET password = ? WHERE username = ?", newPassword, currentUsername)
 			if err != nil {
 				log.Println(err)
 				http.Error(w, "Error updating email", http.StatusInternalServerError)
@@ -309,9 +320,8 @@ func Parameter(w http.ResponseWriter, r *http.Request) {
 
 func Categopost(w http.ResponseWriter, r *http.Request) {
 	categoryName := strings.TrimPrefix(r.URL.Path, "/categories/")
-	log.Println("Category:", categoryName)
 
-	posts, userIDs, err := getPostsByCategory(categoryName)
+	posts, postIDs, userIDs, err := getPostsByCategory(categoryName)
 	if err != nil {
 		log.Println("Error retrieving posts:", err)
 		http.Error(w, "Error retrieving posts", http.StatusInternalServerError)
@@ -338,13 +348,49 @@ func Categopost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if r.Method == "POST" {
+		postID := r.FormValue("post-id")
+		content := r.FormValue("reply-message")
+
+		db, err := sql.Open("sqlite3", "./database.db")
+		if err != nil {
+			http.Error(w, "Database connection error", http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		session, err := validateSession(r)
+		if err != nil {
+			http.Error(w, "You must be logged in to post", http.StatusUnauthorized)
+			return
+		}
+
+		var userID int
+		err = db.QueryRow("SELECT id FROM users WHERE username = ?", session.Username).Scan(&userID)
+		if err != nil {
+			http.Error(w, "Error retrieving user ID", http.StatusInternalServerError)
+			return
+		}
+
+		_, err = db.Exec("INSERT INTO commentaries (postID, user_ID, content) VALUES (?, ?, ?)", postID, userID, content)
+		if err != nil {
+			http.Error(w, "Error inserting commentary", http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, "/categories", http.StatusSeeOther)
+		return
+	}
+
 	data := struct {
 		Category  string
 		Posts     []string
+		PostIDs   []int
 		Usernames []string
 	}{
 		Category:  categoryName,
 		Posts:     posts,
+		PostIDs:   postIDs,
 		Usernames: usernames,
 	}
 

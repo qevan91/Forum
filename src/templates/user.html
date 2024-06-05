@@ -30,7 +30,7 @@
     <h4>Email: {{.Email}}</h4>
 
     <form action="/user" method="post">
-        <label for="email">New Email:</label>
+        <label for="email">New email:</label>
         <input type="email" id="email" name="email" required>
         <button type="submit">Submit</button>
     </form>
@@ -40,6 +40,13 @@
         <input type="text" id="username" name="username" required>
         <button type="submit">Submit</button>
     </form>
+
+    <form action="/user" method="post">
+        <label for="password">New password:</label>
+        <input type="text" id="password" name="password" required>
+        <button type="submit">Submit</button>
+    </form>
+
     <form action="/user" method="post">
         <button type="submit">Log Out</button>
     </form>
