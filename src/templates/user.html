@@ -50,6 +50,17 @@
     <form action="/user" method="post">
         <button type="submit">Log Out</button>
     </form>
+
+    <h2>Post:</h2>
+    {{range $index, $post := .Posts}}
+    <p>{{$post}}</p>
+    {{end}}
+
+    <h2>Commentaire:</h2>
+    {{range $index, $coms := .Commentaires}}
+    <p>{{$coms}}</p>
+    {{end}}
+
     <script src="src/java/shadowMode.js"></script>
 </body>
 </html>

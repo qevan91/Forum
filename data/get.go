@@ -61,6 +61,34 @@ func getPost() ([]string, error) {
 	return posts, nil
 }
 
+func getPostByUserID(userID int) ([]string, error) {
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT content FROM posts WHERE user_id = ?", userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []string
+	for rows.Next() {
+		var content string
+		if err := rows.Scan(&content); err != nil {
+			return nil, err
+		}
+		posts = append(posts, content)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+
 func getPostsByCategory(categoryName string) ([]string, []int, []int, error) {
 	db, err := sql.Open("sqlite3", "./database.db")
 	if err != nil {
@@ -165,6 +193,35 @@ func getPostByID(postID int) ([]string, error) {
 			return nil, err
 		}
 		content = append(content, post)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return content, nil
+}
+
+func getComByUserID(userID int) ([]string, error) {
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT content FROM commentaries WHERE user_id = ?", userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var content []string
+	for rows.Next() {
+		var com string
+		if err := rows.Scan(&com); err != nil {
+			return nil, err
+		}
+		content = append(content, com)
 	}
 
 	if err := rows.Err(); err != nil {

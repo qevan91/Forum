@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -243,20 +244,40 @@ func Users(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID, date, err := getUserByName(username)
+	if err != nil {
+		http.Error(w, "Error retrieving posts", http.StatusInternalServerError)
+		return
+	}
+
+	coms, err := getComByUserID(userID)
+	if err != nil {
+		http.Error(w, "Error", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println(date)
+
+	posts, err := getPostByUserID(userID)
+	if err != nil {
+		http.Error(w, "Error retrieving posts", http.StatusInternalServerError)
+		return
+	}
+
 	if r.Method == "POST" {
-		currentUsername := session.Username
 		newEmail := r.FormValue("email")
 		newUsername := r.FormValue("username")
 		newPassword := r.FormValue("password")
+		logout := r.FormValue("logout")
 
-		if newEmail == "" && newUsername == "" && newPassword == "" {
+		if logout == "true" {
 			deleteSession(w, r)
 			http.Redirect(w, r, "/home", http.StatusSeeOther)
 			return
 		}
 
 		if newEmail != "" {
-			_, err = db.Exec("UPDATE users SET email = ? WHERE username = ?", newEmail, currentUsername)
+			_, err = db.Exec("UPDATE users SET email = ? WHERE username = ?", newEmail, username)
 			if err != nil {
 				log.Println(err)
 				http.Error(w, "Error updating email", http.StatusInternalServerError)
@@ -265,10 +286,10 @@ func Users(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if newPassword != "" {
-			_, err = db.Exec("UPDATE users SET password = ? WHERE username = ?", newPassword, currentUsername)
+			_, err = db.Exec("UPDATE users SET password = ? WHERE username = ?", newPassword, username)
 			if err != nil {
 				log.Println(err)
-				http.Error(w, "Error updating email", http.StatusInternalServerError)
+				http.Error(w, "Error updating password", http.StatusInternalServerError)
 				return
 			}
 		}
@@ -285,7 +306,7 @@ func Users(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			_, err = db.Exec("UPDATE users SET username = ? WHERE username = ?", newUsername, currentUsername)
+			_, err = db.Exec("UPDATE users SET username = ? WHERE username = ?", newUsername, username)
 			if err != nil {
 				log.Println(err)
 				http.Error(w, "Error updating username", http.StatusInternalServerError)
@@ -300,15 +321,21 @@ func Users(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+		http.Redirect(w, r, "/user", http.StatusSeeOther)
+		return
 	}
 
 	tmpl := template.Must(template.ParseFiles("src/templates/user.html"))
 	data := struct {
-		Username string
-		Email    string
+		Username     string
+		Email        string
+		Posts        []string
+		Commentaires []string
 	}{
-		Username: username,
-		Email:    email,
+		Username:     username,
+		Email:        email,
+		Posts:        posts,
+		Commentaires: coms,
 	}
 	tmpl.Execute(w, data)
 }
