@@ -13,5 +13,11 @@
             <li><a href="/profile/{{index $.Usernames $index}}">{{index $.Usernames $index}}</a>: {{$post}}</li>
         {{end}}
     </ul>
+    <h1>Comments</h1>
+    <ul>
+        {{range .}}
+        <li>{{.}}</li>
+        {{end}}
+    </ul>
 </body>
 </html>

@@ -230,3 +230,61 @@ func getComByUserID(userID int) ([]string, error) {
 
 	return content, nil
 }
+
+func getComByPostID(postID int) ([]string, error) {
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT content FROM commentaries WHERE postID = ?", postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var content []string
+	for rows.Next() {
+		var com string
+		if err := rows.Scan(&com); err != nil {
+			return nil, err
+		}
+		content = append(content, com)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return content, nil
+}
+
+func getUserByCom(postID int) ([]int, error) {
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT user_id FROM commentaries WHERE postID = ?", postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var userIDs []int
+	for rows.Next() {
+		var userID int
+		if err := rows.Scan(&userID); err != nil {
+			return nil, err
+		}
+		userIDs = append(userIDs, userID)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return userIDs, nil
+}

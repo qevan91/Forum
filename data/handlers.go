@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+
+	//"strconv"
 	"strings"
 )
 
@@ -243,7 +245,6 @@ func Users(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error retrieving user email", http.StatusInternalServerError)
 		return
 	}
-
 	userID, date, err := getUserByName(username)
 	if err != nil {
 		http.Error(w, "Error retrieving posts", http.StatusInternalServerError)
@@ -263,7 +264,6 @@ func Users(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error retrieving posts", http.StatusInternalServerError)
 		return
 	}
-
 	if r.Method == "POST" {
 		newEmail := r.FormValue("email")
 		newUsername := r.FormValue("username")
@@ -347,7 +347,6 @@ func Parameter(w http.ResponseWriter, r *http.Request) {
 
 func Categopost(w http.ResponseWriter, r *http.Request) {
 	categoryName := strings.TrimPrefix(r.URL.Path, "/categories/")
-
 	posts, postIDs, userIDs, err := getPostsByCategory(categoryName)
 	if err != nil {
 		log.Println("Error retrieving posts:", err)
@@ -358,13 +357,47 @@ func Categopost(w http.ResponseWriter, r *http.Request) {
 	var usernames []string
 	for _, userID := range userIDs {
 		username, err := getUsernameByPostID(userID)
-		name := strings.Join(username, " ")
 		if err != nil {
 			log.Println("Error retrieving username:", err)
 			http.Error(w, "Error retrieving username", http.StatusInternalServerError)
 			return
 		}
+		name := strings.Join(username, " ")
 		usernames = append(usernames, name)
+	}
+
+	var allCommentaires [][]string
+	var allAuteurCommentaires [][]string
+
+	for _, postID := range postIDs {
+		comments, err := getComByPostID(postID)
+		if err != nil {
+			log.Println("Error retrieving comments for post ID:", postID, err)
+			http.Error(w, "Error retrieving comments", http.StatusInternalServerError)
+			return
+		}
+
+		commentUserIDs, err := getUserByCom(postID)
+		if err != nil {
+			log.Println("Error retrieving authors for post ID:", postID, err)
+			http.Error(w, "Error retrieving authors", http.StatusInternalServerError)
+			return
+		}
+
+		var commentUsernames []string
+		for _, userID := range commentUserIDs {
+			username, err := getUsernameByPostID(userID)
+			if err != nil {
+				log.Println("Error retrieving username:", err)
+				http.Error(w, "Error retrieving username", http.StatusInternalServerError)
+				return
+			}
+			name := strings.Join(username, " ")
+			commentUsernames = append(commentUsernames, name)
+		}
+
+		allCommentaires = append(allCommentaires, comments)
+		allAuteurCommentaires = append(allAuteurCommentaires, commentUsernames)
 	}
 
 	tmplPath := filepath.Join("src/templates/categopost.html")
@@ -375,50 +408,20 @@ func Categopost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Method == "POST" {
-		postID := r.FormValue("post-id")
-		content := r.FormValue("reply-message")
-
-		db, err := sql.Open("sqlite3", "./database.db")
-		if err != nil {
-			http.Error(w, "Database connection error", http.StatusInternalServerError)
-			return
-		}
-		defer db.Close()
-
-		session, err := validateSession(r)
-		if err != nil {
-			http.Error(w, "You must be logged in to post", http.StatusUnauthorized)
-			return
-		}
-
-		var userID int
-		err = db.QueryRow("SELECT id FROM users WHERE username = ?", session.Username).Scan(&userID)
-		if err != nil {
-			http.Error(w, "Error retrieving user ID", http.StatusInternalServerError)
-			return
-		}
-
-		_, err = db.Exec("INSERT INTO commentaries (postID, user_ID, content) VALUES (?, ?, ?)", postID, userID, content)
-		if err != nil {
-			http.Error(w, "Error inserting commentary", http.StatusInternalServerError)
-			return
-		}
-
-		http.Redirect(w, r, "/categories", http.StatusSeeOther)
-		return
-	}
-
 	data := struct {
-		Category  string
-		Posts     []string
-		PostIDs   []int
-		Usernames []string
+		Category           string
+		Posts              []string
+		PostIDs            []int
+		Usernames          []string
+		Commentaires       [][]string
+		AuteurCommentaires [][]string
 	}{
-		Category:  categoryName,
-		Posts:     posts,
-		PostIDs:   postIDs,
-		Usernames: usernames,
+		Category:           categoryName,
+		Posts:              posts,
+		PostIDs:            postIDs,
+		Usernames:          usernames,
+		Commentaires:       allCommentaires,
+		AuteurCommentaires: allAuteurCommentaires,
 	}
 
 	err = tmpl.Execute(w, data)

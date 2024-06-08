@@ -2,101 +2,27 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/src/css/categopost.css" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <style>
-        .like-button {
-            cursor: pointer;
-            padding: 5px 10px;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-            display: flex;
-            align-items: center;
-        }
-        .heart-icon {
-            color: #ccc; 
-            font-size: 24px;
-        }
-        .like-button.clicked .heart-icon {
-            color: red;
-        }
-        .message-input {
-            display: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .message-input.visible {
-            display: block;
-            opacity: 1;
-        }
-        body {
-            background-color: white;
-            color: rgb(48, 48, 48);
-        }
-        h1 {
-            font-family: Arial, sans-serif;
-        }
-        body.dark-theme {
-            background-color:rgb(48, 48, 48);
-            color: white;
-        }
-        body {
-            transition: background-color 0.3s, color 0.3s;
-        }
-    </style>
-    <title>{{.Category}} Page</title>
+    <title>Category Posts</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/style.css">
 </head>
 <body>
-    <h1>Welcome to the {{.Category}} category page!</h1>
-    <br/>
+    <h1>Category: {{.Category}}</h1>
+
     {{range $index, $post := .Posts}}
-    <div class="tweet">
-        <div class="tweet-header">
-            <img src="/src/img/account_logo.jpg" alt="Profile Picture" class="tweet-profile-pic">
-            <div>
-                <span class="tweet-username">
-                    <a href="/profile/{{index $.Usernames $index}}">{{index $.Usernames $index}}</a>
-                </span>
-                <span class="tweet-time">. 23h</span>
-            </div>
-        </div>
-        
-        <div class="tweet-content">
+        <div>
+            <h2>Post by {{index $.Usernames $index}}</h2>
             <p>{{$post}}</p>
-        </div>
-        <div class="tweet-actions">
-            <div class="tweet-action like-button" onclick="submitLike(event)">
-                <span class="material-symbols-outlined heart-icon">
-                    favorite
-                </span>
-            </div>
-            <div class="tweet-action">
-                <span class="material-symbols-outlined" onclick="toggleReplyInput(this)">
-                    forum
-                </span>
-                <form action="/categories/" method="post">
-                    <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
-                    <input type="text" required name="reply-message" class="message-input reply-input" placeholder="Your reply">
-                    <button type="submit">Submit</button>
-                </form>                
-            </div>
-        </div>
-    </div>
+
+            <h1>Commentaires</h1>
+{{range $postIndex, $postComments := $.Commentaires}}
+    <h2>Post {{index $.PostIDs $postIndex}}</h2>
+    {{range $commentIndex, $comment := $postComments}}
+        <h3>{{index (index $.AuteurCommentaires $postIndex) $commentIndex}}</h3>
+        <p>{{$comment}}</p>
     {{end}}
-
-    <script>
-        function submitLike(event) {
-            var likeButton = event.target.closest('.like-button');
-            likeButton.classList.toggle('clicked');
-        }
-
-        function toggleReplyInput(replyButton) {
-            var tweetActions = replyButton.closest('.tweet-actions');
-            var replyInput = tweetActions.querySelector('.reply-input');
-            replyInput.classList.toggle('visible');
-        }
-    </script>
-    <script src="../java/shadowMode.js"></script>
+{{end}}
+ 
+        
+    {{end}}
 </body>
 </html>
