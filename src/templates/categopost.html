@@ -3,26 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <title>Category Posts</title>
-    <link rel="stylesheet" type="text/css" href="/static/css/style.css">
+    <link rel="stylesheet" type="text/css" href="/src/static/tweet.css">
 </head>
 <body>
-    <h1>Category: {{.Category}}</h1>
-
-    {{range $index, $post := .Posts}}
-        <div>
-            <h2>Post by {{index $.Usernames $index}}</h2>
-            <p>{{$post}}</p>
-
-            <h1>Commentaires</h1>
-{{range $postIndex, $postComments := $.Commentaires}}
-    <h2>Post {{index $.PostIDs $postIndex}}</h2>
-    {{range $commentIndex, $comment := $postComments}}
-        <h3>{{index (index $.AuteurCommentaires $postIndex) $commentIndex}}</h3>
-        <p>{{$comment}}</p>
-    {{end}}
-{{end}}
- 
-        
-    {{end}}
+    <div class="container">
+        <h1>Category: {{.Category}}</h1>
+        {{range $index, $post := .Posts}}
+        <div class="tweet">
+            <div class="tweet-header">
+                <img src="/src/img/account_logo.jpg" alt="Profile Picture" class="tweet-profile-pic">
+                <div>
+                    <span class="tweet-username">
+                        <a href="/profile/{{index $.Usernames $index}}">{{index $.Usernames $index}}</a>
+                    </span>
+                    <span class="tweet-time">. 23h</span>
+                </div>
+            </div>
+            <div class="tweet-content">
+                <p>{{$post}}</p>
+            </div>
+            <div class="tweet-actions">
+                <div class="tweet-action like-button" onclick="submitLike(event)">
+                    <span class="material-symbols-outlined heart-icon">
+                        favorite
+                    </span>
+                </div>
+                <div class="tweet-action">
+                    <span class="material-symbols-outlined" onclick="toggleReplyInput(this)">
+                        forum
+                    </span>
+                    <form action="/categories/" method="post">
+                        <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
+                        <input type="text" required name="reply-message" class="message-input reply-input" placeholder="Your reply">
+                        <button type="submit">Submit</button>
+                    </form>
+                </div>
+            </div>
+            <br>
+            <div class="comments-section">
+                {{range $postIndex, $postComments := $.Commentaires}}
+                    {{range $commentIndex, $comment := $postComments}}
+                        <a href="/profile/{{index (index $.AuteurCommentaires $postIndex) $commentIndex}}">{{index (index $.AuteurCommentaires $postIndex) $commentIndex}}</a>
+                        <p>{{$comment}}</p>
+                    {{end}}
+                {{end}}
+            </div>
+        </div>
+        {{end}}
+    </div>
 </body>
 </html>
