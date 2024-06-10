@@ -6,21 +6,29 @@
     <link rel="stylesheet" href="/src/static/login.css">
     <style>
         body {
-      background-color: white;
-      color: rgb(48, 48, 48);
-  }
-  .logo, .account_logo {
-      height: 50px;
-      width: auto;
-  }
-  body.dark-theme {
-      background-color:  rgb(48, 48, 48);
-      color: white;
-  }
-  body {
-      transition: background-color 0.3s, color 0.3s;
-  }
-      </style>
+            background-color: white;
+            color: rgb(48, 48, 48);
+        }
+        .logo, .account_logo {
+            height: 50px;
+            width: auto;
+        }
+        .delete-button {
+            margin-left: 10px;
+            color: red;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 16px;
+        }
+        body.dark-theme {
+            background-color: rgb(48, 48, 48);
+            color: white;
+        }
+        body {
+            transition: background-color 0.3s, color 0.3s;
+        }
+    </style>
     <title>Categories</title>
 </head>
 <body>
@@ -29,11 +37,18 @@
     </a>
     <h1>Categories</h1>
     <div class="categories">
-        {{range .}}
+        {{range .Category}}
         <div class="category">
             <a href="/categories/{{.}}">
                 <h2>{{.}}</h2>
             </a>
+            {{if eq $.CurrentUserRole "Administrators"}}
+            <form action="/categories" method="post" style="display: inline;">
+                <input type="hidden" name="category-id" value="{{.}}">
+                <input type="hidden" name="_method" value="DELETE">
+                <button type="submit" class="delete-button">Delete</button>
+            </form>            
+            {{end}}
         </div>
         {{end}}
     </div>

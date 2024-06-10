@@ -4,17 +4,25 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	// "time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
-// type User struct {
-// 	ID        int
-// 	Username  string
-// 	Email     string
-// 	Password  string
-// 	Admin     string
-// 	CreatedAt time.Time
-// }
+var Ro = Role{
+	Users:          "User",
+	Moderators:     "Moderator",
+	Administrators: "Administrator",
+}
+
+type Role struct {
+	Users          string
+	Moderators     string
+	Administrators string
+}
+
+func GetRoles() []string {
+	return []string{"Users", "Moderators", "Administrators"}
+}
 
 func SetupDatabase() {
 	db, err := sql.Open("sqlite3", "./database.db")
@@ -28,7 +36,7 @@ func SetupDatabase() {
 		username TEXT UNIQUE,
 		email TEXT UNIQUE,
 		password TEXT NOT NULL,
-		admin TEXT UNIQUE,
+		Role TEXT,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)`)
 	if err != nil {
@@ -101,4 +109,14 @@ func SetupDatabaseCommentary() {
 	}
 
 	fmt.Println("Commentary database setup completed.")
+}
+
+func hashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(bytes), err
+}
+
+func checkPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }

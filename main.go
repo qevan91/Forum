@@ -26,7 +26,6 @@ func main() {
 	http.Handle("/auth", http.HandlerFunc(data.Auth))
 	http.Handle("/post", http.HandlerFunc(data.Post))
 	http.Handle("/categories", http.HandlerFunc(data.Categories))
-	http.Handle("/inside", http.HandlerFunc(data.Inside))
 	http.Handle("/about", http.HandlerFunc(data.About))
 	http.Handle("/create", http.HandlerFunc(data.Create))
 	http.Handle("/user", http.HandlerFunc(data.Users))

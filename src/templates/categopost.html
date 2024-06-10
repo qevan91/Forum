@@ -38,6 +38,13 @@
                         <button type="submit">Submit</button>
                     </form>
                 </div>
+                {{if eq $.CurrentUserRole "Administrators"}}
+                <form action="/categories/" method="post" style="display: inline;">
+                    <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="delete-button">Delete</button>
+                </form>
+                {{end}}
             </div>
             <br>
             <div class="comments-section">
@@ -51,5 +58,18 @@
         </div>
         {{end}}
     </div>
+    <script>
+        function submitLike(event) {
+            var likeButton = event.target.closest('.like-button');
+            likeButton.classList.toggle('clicked');
+        }
+
+        function toggleReplyInput(replyButton) {
+            var tweetActions = replyButton.closest('.tweet-actions');
+            var replyInput = tweetActions.querySelector('.reply-input');
+            replyInput.classList.toggle('visible');
+        }
+    </script>
+    <script src="../java/shadowMode.js"></script>
 </body>
 </html>

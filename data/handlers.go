@@ -2,14 +2,12 @@ package data
 
 import (
 	"database/sql"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"path/filepath"
-
-	//"strconv"
 	"strings"
+	"time"
 )
 
 var errorAbout bool = false
@@ -36,7 +34,12 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 		defer db.Close()
 
 		if username != "" && email != "" && password != "" {
-			_, err = db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", username, email, password)
+			hashedPassword, err := hashPassword(password)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			_, err = db.Exec("INSERT INTO users (username, email, password, Role) VALUES (?, ?, ?, ?)", username, email, hashedPassword, "user")
 			if err != nil {
 				data.Error = "Erreur lors de l'inscription"
 				renderTemplate(w, data)
@@ -49,8 +52,8 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		} else if username != "" && email == "" && password != "" {
-			var storedPassword string
-			err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&storedPassword)
+			var storedHashedPassword string
+			err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&storedHashedPassword)
 			if err != nil {
 				if err == sql.ErrNoRows {
 					data.Error = "Identifiant incorrect"
@@ -61,7 +64,7 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if password != storedPassword {
+			if !checkPasswordHash(password, storedHashedPassword) {
 				data.Error = "Mot de passe incorrect"
 				renderTemplate(w, data)
 				return
@@ -172,20 +175,54 @@ func Categories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl := template.Must(template.ParseFiles("src/templates/categories.html"))
-	tmpl.Execute(w, categories)
-}
-
-func Inside(w http.ResponseWriter, r *http.Request) {
-	categories, err := getPost()
+	db, err := sql.Open("sqlite3", "./database.db")
 	if err != nil {
-		log.Println(err)
-		http.Error(w, "Error retrieving categories", http.StatusInternalServerError)
+		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	session, err := validateSession(r)
+	if err != nil {
+		http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
 		return
 	}
 
-	tmpl := template.Must(template.ParseFiles("src/templates/inside.html"))
-	tmpl.Execute(w, categories)
+	var currentUserRole string
+	err = db.QueryRow("SELECT Role FROM users WHERE username = ?", session.Username).Scan(&currentUserRole)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Error retrieving user role", http.StatusInternalServerError)
+		return
+	}
+
+	if r.Method == "POST" {
+		categoryID := r.FormValue("category-id")
+		delete := r.FormValue("_method")
+
+		if delete == "DELETE" {
+			_, err = db.Exec("DELETE FROM categories WHERE name = ?", categoryID)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "Error deleting category", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		http.Redirect(w, r, "/categories", http.StatusSeeOther)
+		return
+	}
+
+	data := struct {
+		Category        []string
+		CurrentUserRole string
+	}{
+		Category:        categories,
+		CurrentUserRole: currentUserRole,
+	}
+
+	tmpl := template.Must(template.ParseFiles("src/templates/categories.html"))
+	tmpl.Execute(w, data)
 }
 
 func Create(w http.ResponseWriter, r *http.Request) {
@@ -245,36 +282,40 @@ func Users(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error retrieving user email", http.StatusInternalServerError)
 		return
 	}
-	userID, date, err := getUserByName(username)
+
+	userID, dates, err := getUserByName(username)
 	if err != nil {
-		http.Error(w, "Error retrieving posts", http.StatusInternalServerError)
+		http.Error(w, "Error retrieving user data", http.StatusInternalServerError)
 		return
 	}
 
 	coms, err := getComByUserID(userID)
 	if err != nil {
-		http.Error(w, "Error", http.StatusInternalServerError)
+		http.Error(w, "Error retrieving comments", http.StatusInternalServerError)
 		return
 	}
-
-	fmt.Println(date)
 
 	posts, err := getPostByUserID(userID)
 	if err != nil {
 		http.Error(w, "Error retrieving posts", http.StatusInternalServerError)
 		return
 	}
+
+	localDates := make([]string, len(dates))
+	for i, date := range dates {
+		localTime, err := time.Parse(time.RFC3339, date)
+		if err != nil {
+			log.Println("Error parsing date:", err)
+			localDates[i] = date
+		} else {
+			localDates[i] = localTime.Format("02-01-2006 15:04:05")
+		}
+	}
+
 	if r.Method == "POST" {
 		newEmail := r.FormValue("email")
 		newUsername := r.FormValue("username")
 		newPassword := r.FormValue("password")
-		logout := r.FormValue("logout")
-
-		if logout == "true" {
-			deleteSession(w, r)
-			http.Redirect(w, r, "/home", http.StatusSeeOther)
-			return
-		}
 
 		if newEmail != "" {
 			_, err = db.Exec("UPDATE users SET email = ? WHERE username = ?", newEmail, username)
@@ -286,7 +327,14 @@ func Users(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if newPassword != "" {
-			_, err = db.Exec("UPDATE users SET password = ? WHERE username = ?", newPassword, username)
+			hashedPassword, err := hashPassword(newPassword)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "Error hashing password", http.StatusInternalServerError)
+				return
+			}
+
+			_, err = db.Exec("UPDATE users SET password = ? WHERE username = ?", hashedPassword, username)
 			if err != nil {
 				log.Println(err)
 				http.Error(w, "Error updating password", http.StatusInternalServerError)
@@ -321,6 +369,12 @@ func Users(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+
+		if newUsername == "" && newEmail == "" && newPassword == "" {
+			deleteSession(w, r)
+			http.Redirect(w, r, "/home", http.StatusSeeOther)
+		}
+
 		http.Redirect(w, r, "/user", http.StatusSeeOther)
 		return
 	}
@@ -331,13 +385,17 @@ func Users(w http.ResponseWriter, r *http.Request) {
 		Email        string
 		Posts        []string
 		Commentaires []string
+		Date         []string
 	}{
 		Username:     username,
 		Email:        email,
 		Posts:        posts,
 		Commentaires: coms,
+		Date:         localDates,
 	}
-	tmpl.Execute(w, data)
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, "Erreur lors du rendu de la page", http.StatusInternalServerError)
+	}
 }
 
 func Parameter(w http.ResponseWriter, r *http.Request) {
@@ -349,8 +407,28 @@ func Categopost(w http.ResponseWriter, r *http.Request) {
 	categoryName := strings.TrimPrefix(r.URL.Path, "/categories/")
 	posts, postIDs, userIDs, err := getPostsByCategory(categoryName)
 	if err != nil {
-		log.Println("Error retrieving posts:", err)
 		http.Error(w, "Error retrieving posts", http.StatusInternalServerError)
+		return
+	}
+
+	session, err := validateSession(r)
+	if err != nil {
+		http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
+		return
+	}
+
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	var currentUserRole string
+	err = db.QueryRow("SELECT Role FROM users WHERE username = ?", session.Username).Scan(&currentUserRole)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Error retrieving user role", http.StatusInternalServerError)
 		return
 	}
 
@@ -400,6 +478,36 @@ func Categopost(w http.ResponseWriter, r *http.Request) {
 		allAuteurCommentaires = append(allAuteurCommentaires, commentUsernames)
 	}
 
+	if r.Method == "POST" {
+		postID := r.FormValue("post-id")
+		content := r.FormValue("reply-message")
+		delete := r.FormValue("_method")
+
+		var userID int
+		err = db.QueryRow("SELECT id FROM users WHERE username = ?", session.Username).Scan(&userID)
+		if err != nil {
+			http.Error(w, "Error retrieving user ID", http.StatusInternalServerError)
+			return
+		}
+
+		if delete == "DELETE" {
+			_, err = db.Exec("DELETE FROM posts WHERE ID = ?", postID)
+			if err != nil {
+				http.Error(w, "Error deleting post", http.StatusInternalServerError)
+				return
+			}
+		} else {
+			_, err = db.Exec("INSERT INTO commentaries (postID, user_ID, content) VALUES (?, ?, ?)", postID, userID, content)
+			if err != nil {
+				http.Error(w, "Error inserting commentary", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		http.Redirect(w, r, "/categories", http.StatusSeeOther)
+		return
+	}
+
 	tmplPath := filepath.Join("src/templates/categopost.html")
 	tmpl, err := template.ParseFiles(tmplPath)
 	if err != nil {
@@ -415,6 +523,7 @@ func Categopost(w http.ResponseWriter, r *http.Request) {
 		Usernames          []string
 		Commentaires       [][]string
 		AuteurCommentaires [][]string
+		CurrentUserRole    string
 	}{
 		Category:           categoryName,
 		Posts:              posts,
@@ -422,6 +531,7 @@ func Categopost(w http.ResponseWriter, r *http.Request) {
 		Usernames:          usernames,
 		Commentaires:       allCommentaires,
 		AuteurCommentaires: allAuteurCommentaires,
+		CurrentUserRole:    currentUserRole,
 	}
 
 	err = tmpl.Execute(w, data)
@@ -434,7 +544,7 @@ func Categopost(w http.ResponseWriter, r *http.Request) {
 func OtherProfile(w http.ResponseWriter, r *http.Request) {
 	OtUsername := strings.TrimPrefix(r.URL.Path, "/profile/")
 
-	id, date, err := getUserByName(OtUsername)
+	id, dates, err := getUserByName(OtUsername)
 	if err != nil {
 		log.Println("Error retrieving user:", err)
 		http.Error(w, "Error retrieving user", http.StatusInternalServerError)
@@ -448,15 +558,64 @@ func OtherProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	localDates := make([]string, len(dates))
+	for i, date := range dates {
+		localTime, err := time.Parse(time.RFC3339, date)
+		if err != nil {
+			log.Println("Error parsing date:", err)
+			localDates[i] = date
+		} else {
+			localDates[i] = localTime.Format("02-01-2006 15:04:05")
+		}
+	}
+
+	if r.Method == "POST" {
+		role := r.FormValue("role")
+
+		validRoles := GetRoles()
+		isValidRole := false
+		for _, r := range validRoles {
+			if role == r {
+				isValidRole = true
+				break
+			}
+		}
+
+		if !isValidRole {
+			http.Error(w, "Invalid role", http.StatusBadRequest)
+			return
+		}
+
+		db, err := sql.Open("sqlite3", "./database.db")
+		if err != nil {
+			http.Error(w, "Database connection error", http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		_, err = db.Exec("UPDATE users SET Role = ? WHERE username = ?", role, OtUsername)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Error updating role", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	roles := GetRoles()
+
 	tmpl := template.Must(template.ParseFiles("src/templates/otherprofile.html"))
 	data := struct {
 		Dates    []string
 		Post     []string
 		Username string
+		Status   []string
 	}{
-		Dates:    date,
+		Dates:    localDates,
 		Post:     content,
 		Username: OtUsername,
+		Status:   roles,
 	}
-	tmpl.Execute(w, data)
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, "Erreur lors du rendu de la page", http.StatusInternalServerError)
+	}
 }

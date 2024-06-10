@@ -27,7 +27,17 @@
         <img class="logo" src="src/img/logo.png" alt="Logo du site" />
     </a>    
     <h1>Username: {{.Username}}</h1>
-    <h1>Create at: {{.Dates}}</h1>
+    <h1>Created at: {{index .Dates 0}}</h1>
+    <form action="/profile/{{.Username}}" method="post">
+        <select name="role" id="role-select">
+            <option value="">-- Choose a role --</option>
+            {{range .Status}}
+            <option value="{{.}}">{{.}}</option>
+            {{end}}
+        </select>
+        <button type="submit">Submit</button>
+    </form>
+    <br><br>
     {{range $index, $post := .Post}}
     <li>{{$.Username}}: {{$post}}</li>
     {{end}}

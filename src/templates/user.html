@@ -28,6 +28,13 @@
     </a>
     <h4>Username: {{.Username}}</h4>
     <h4>Email: {{.Email}}</h4>
+    <h4>Dates: 
+        <ul style="display:inline; list-style:none; padding:0;">
+            {{range .Date}}
+            <li style="display:inline; margin-right:10px;">{{.}}</li>
+            {{end}}
+        </ul>
+    </h4>
 
     <form action="/user" method="post">
         <label for="email">New email:</label>
