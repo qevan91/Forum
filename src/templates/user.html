@@ -4,68 +4,76 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="/src/static/user.css">
-    <style>
-        body {
-      background-color: white;
-      color: rgb(48, 48, 48);
-  }
-  h1 {
-      font-family: Arial, sans-serif;
-  }
-  body.dark-theme {
-      background-color:rgb(48, 48, 48);
-      color: white;
-  }
-  body {
-      transition: background-color 0.3s, color 0.3s;
-  }
-      </style>
     <title>Utilisateur</title>
+    <style>
+       .container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+       .left-column {
+            flex-basis: 50%;
+            padding: 20px;
+        }
+       .right-column {
+            flex-basis: 50%;
+            padding: 20px;
+        }
+    </style>
 </head>
 <body>
     <a href="home">
         <img class="logo" src="src/img/logo.png" alt="Logo du site" />
     </a>
+
+    {{if.IsAuthenticated}}
     <h4>Username: {{.Username}}</h4>
     <h4>Email: {{.Email}}</h4>
     <h4>Dates: 
         <ul style="display:inline; list-style:none; padding:0;">
-            {{range .Date}}
+            {{range.Date}}
             <li style="display:inline; margin-right:10px;">{{.}}</li>
             {{end}}
         </ul>
     </h4>
+        <div class="container">
+            <div style="width: 60%; float:left">
+                <form action="/user" method="post">
+                    <label for="email">New email:</label>
+                    <input type="email" id="email" name="email" required>
+                    <button type="submit">Submit</button>
+                </form>
 
-    <form action="/user" method="post">
-        <label for="email">New email:</label>
-        <input type="email" id="email" name="email" required>
-        <button type="submit">Submit</button>
-    </form>
+                <form action="/user" method="post">
+                    <label for="username">New username:</label>
+                    <input type="text" id="username" name="username" required>
+                    <button type="submit">Submit</button>
+                </form>
 
-    <form action="/user" method="post">
-        <label for="username">New username:</label>
-        <input type="text" id="username" name="username" required>
-        <button type="submit">Submit</button>
-    </form>
+                <form action="/user" method="post">
+                    <label for="password">New password:</label>
+                    <input type="text" id="password" name="password" required>
+                    <button type="submit">Submit</button>
+                </form>
 
-    <form action="/user" method="post">
-        <label for="password">New password:</label>
-        <input type="text" id="password" name="password" required>
-        <button type="submit">Submit</button>
-    </form>
-
-    <form action="/user" method="post">
-        <button type="submit">Log Out</button>
-    </form>
-
-    <h2>Post:</h2>
-    {{range $index, $post := .Posts}}
-    <p>{{$post}}</p>
-    {{end}}
-
-    <h2>Commentaire:</h2>
-    {{range $index, $coms := .Commentaires}}
-    <p>{{$coms}}</p>
+                <form action="/user" method="post">
+                    <button type="submit">Log Out</button>
+                </form>
+            </div>
+            <div style="width: 20%; float:middle">
+                <h2>Post:</h2>
+                {{range $index, $post :=.Posts}}
+                <p>{{$post}}</p>
+                {{end}}            
+            </div>
+            <div style="width: 20%; float:right">
+                <h2>Commentaire:</h2>
+                {{range $index, $coms :=.Commentaires}}
+                <p>{{$coms}}</p>
+                {{end}} 
+            </div>       
+        </div>
+    {{else}}
+        <h4>{{.Auth}}</h4>
     {{end}}
 
     <script src="src/java/shadowMode.js"></script>

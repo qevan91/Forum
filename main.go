@@ -2,7 +2,6 @@ package main
 
 import (
 	"Forum/data"
-	"fmt"
 	"log"
 	"net/http"
 	"os/exec"
@@ -16,9 +15,11 @@ func main() {
 	data.SetupDatabase2()
 	data.SetupDatabasePost()
 	data.SetupDatabaseCommentary()
+	data.SetupDatabaseReactions()
 
 	fs := http.FileServer(http.Dir("src"))
 	http.Handle("/src/", http.StripPrefix("/src/", fs))
+	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
 
 	http.Handle("/categories/", http.HandlerFunc(data.Categopost))
 	http.Handle("/profile/", http.HandlerFunc(data.OtherProfile))
@@ -31,7 +32,6 @@ func main() {
 	http.Handle("/user", http.HandlerFunc(data.Users))
 	http.Handle("/parameter", http.HandlerFunc(data.Parameter))
 
-	fmt.Println("Server is starting at http://localhost:8080")
 	err := Open("http://localhost:8080/home")
 	if err != nil {
 		log.Printf("Failed to open URL: %v\n", err)

@@ -2,26 +2,27 @@ package data
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 var Ro = Role{
+	Guest:          "Guest",
 	Users:          "User",
 	Moderators:     "Moderator",
-	Administrators: "Administrator",
+	Administrators: "Administrators",
 }
 
 type Role struct {
+	Guest          string
 	Users          string
 	Moderators     string
 	Administrators string
 }
 
 func GetRoles() []string {
-	return []string{"Users", "Moderators", "Administrators"}
+	return []string{"Guest", "Users", "Moderators", "Administrators"}
 }
 
 func SetupDatabase() {
@@ -42,8 +43,6 @@ func SetupDatabase() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Println("Database setup completed.")
 }
 
 func SetupDatabase2() {
@@ -61,8 +60,6 @@ func SetupDatabase2() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Println("Database setup completed.")
 }
 
 func SetupDatabasePost() {
@@ -77,6 +74,7 @@ func SetupDatabasePost() {
 		user_id INTEGER NOT NULL,
 		category_id INTEGER NOT NULL,
 		content TEXT NOT NULL,
+		image_path TEXT,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY(user_id) REFERENCES users(id),
 		FOREIGN KEY(category_id) REFERENCES categories(id)
@@ -84,8 +82,6 @@ func SetupDatabasePost() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Println("Post database setup completed.")
 }
 
 func SetupDatabaseCommentary() {
@@ -107,8 +103,27 @@ func SetupDatabaseCommentary() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
 
-	fmt.Println("Commentary database setup completed.")
+func SetupDatabaseReactions() {
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS reactions (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		post_id INTEGER NOT NULL,
+		user_id INTEGER NOT NULL,
+		reaction INTEGER CHECK(reaction IN (1, -1)),
+		FOREIGN KEY(post_id) REFERENCES posts(id),
+		FOREIGN KEY(user_id) REFERENCES users(id),
+		UNIQUE(post_id, user_id)
+		)`)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func hashPassword(password string) (string, error) {

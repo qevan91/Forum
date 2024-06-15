@@ -61,38 +61,44 @@ func getPostByUserID(userID int) ([]string, error) {
 	return posts, nil
 }
 
-func getPostsByCategory(categoryName string) ([]string, []int, []int, error) {
+func getPostsByCategory(categoryName string) ([]string, []int, []int, []string, []string, error) {
 	db, err := sql.Open("sqlite3", "./database.db")
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 	defer db.Close()
 
-	rows, err := db.Query("SELECT id, content, user_id FROM posts WHERE category_id = ?", categoryName)
+	rows, err := db.Query("SELECT id, content, user_id, image_path, created_at FROM posts WHERE category_id = ?", categoryName)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 	defer rows.Close()
 
 	var posts []string
 	var postIDs []int
 	var userIDs []int
+	var imagePaths []string
+	var dates []string
 	for rows.Next() {
 		var id int
 		var content string
 		var userID int
-		if err := rows.Scan(&id, &content, &userID); err != nil {
-			return nil, nil, nil, err
+		var imagePath string
+		var date string
+		if err := rows.Scan(&id, &content, &userID, &imagePath, &date); err != nil {
+			return nil, nil, nil, nil, nil, err
 		}
 		postIDs = append(postIDs, id)
 		posts = append(posts, content)
 		userIDs = append(userIDs, userID)
+		imagePaths = append(imagePaths, imagePath)
+		dates = append(dates, date)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
-	return posts, postIDs, userIDs, nil
+	return posts, postIDs, userIDs, imagePaths, dates, nil
 }
 
 func getUsernameByPostID(ID int) ([]string, error) {
