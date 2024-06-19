@@ -6,6 +6,46 @@ import (
 	"strings"
 )
 
+func getPost() ([]string, []int, []int, []string, []string, error) {
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		return nil, nil, nil, nil, nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT id, content, user_id, image_path, created_at FROM posts")
+	if err != nil {
+		return nil, nil, nil, nil, nil, err
+	}
+	defer rows.Close()
+
+	var posts []string
+	var postIDs []int
+	var userIDs []int
+	var imagePaths []string
+	var dates []string
+	for rows.Next() {
+		var id int
+		var content string
+		var userID int
+		var imagePath string
+		var date string
+		if err := rows.Scan(&id, &content, &userID, &imagePath, &date); err != nil {
+			return nil, nil, nil, nil, nil, err
+		}
+		postIDs = append(postIDs, id)
+		posts = append(posts, content)
+		userIDs = append(userIDs, userID)
+		imagePaths = append(imagePaths, imagePath)
+		dates = append(dates, date)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, nil, nil, nil, nil, err
+	}
+
+	return posts, postIDs, userIDs, imagePaths, dates, nil
+}
+
 func getCategories() ([]string, error) {
 	db, err := sql.Open("sqlite3", "./database.db")
 	if err != nil {
@@ -355,7 +395,32 @@ func getUsernameByUserID(userIDs []int) ([]string, error) {
 	return usernames, nil
 }
 
-func getLikedPost(userID int) ([]int, error) {
+func getLikedPost() ([]int, error) {
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT post_id FROM reactions WHERE reaction != 0")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []int
+	for rows.Next() {
+		var postID int
+		if err := rows.Scan(&postID); err != nil {
+			return nil, err
+		}
+		posts = append(posts, postID)
+	}
+
+	return posts, nil
+}
+
+func getLikedPostByID(userID int) ([]int, error) {
 	db, err := sql.Open("sqlite3", "./database.db")
 	if err != nil {
 		return nil, err

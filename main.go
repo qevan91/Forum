@@ -34,6 +34,7 @@ func main() {
 	http.Handle("/user", http.HandlerFunc(data.Users))
 	http.Handle("/parameter", http.HandlerFunc(data.Parameter))
 	http.Handle("/panel", http.HandlerFunc(data.Panel))
+	http.Handle("/filtre", http.HandlerFunc(data.Filtre))
 
 	err := Open("http://localhost:8080/home")
 	if err != nil {

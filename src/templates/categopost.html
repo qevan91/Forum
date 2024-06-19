@@ -68,7 +68,7 @@
                     <span class="tweet-username">
                         <a href="/profile/{{index $.Usernames $index}}">{{index $.Usernames $index}}</a>
                     </span>
-                    <span class="tweet-time">. 23h</span>
+                    <span class="tweet-time">{{index $.LocalDates $index}}</span>
                 </div>
                 {{if eq $.CurrentUserRole "Administrators"}}
                 <form action="/categories/{{$.Category}}" method="post" style="display: inline; text-align: right;">
@@ -120,16 +120,14 @@
             <div class="reply-input">
                 <form action="/categories/{{$.Category}}" method="post">
                     <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
-                    <input type="text" name="reply-content" placeholder="Enter your message">
+                    <input type="text" name="reply-message" placeholder="Enter your message">
                     <button type="submit">Submit</button>
                 </form>
             </div>
             <div class="comments-section">
-                {{range $postIndex, $postComments := $.Commentaires}}
-                    {{range $commentIndex, $comment := $postComments}}
-                        <a href="/profile/{{index (index $.AuteurCommentaires $postIndex) $commentIndex}}">{{index (index $.AuteurCommentaires $postIndex) $commentIndex}}</a>
-                        <p>{{$comment}}</p>
-                    {{end}}
+                {{range $commentIndex, $comment := index $.Commentaires $index}}
+                    <a href="/profile/{{index (index $.AuteurCommentaires $index) $commentIndex}}">{{index (index $.AuteurCommentaires $index) $commentIndex}}</a>
+                    <p>{{$comment}}</p>
                 {{end}}
             </div>
         </div>

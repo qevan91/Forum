@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="/src/static/tweet.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+    <style>
+        body {
+            background-color: white;
+            color: rgb(48, 48, 48);
+        }
+        .logo, .account_logo {
+            height: 50px;
+            width: auto;
+        }
+        body.dark-theme {
+            background-color: rgb(48, 48, 48);
+            color: white;
+        }
+        body {
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .like-button, .dislike-button, .reply-button {
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+        .like-button.clicked .like-icon {
+            color: rgb(0, 255, 34);
+        }
+        .dislike-button.clicked .dislike-icon {
+            color: rgb(255, 0, 0);
+        }
+        .reaction-count {
+            margin-left: 5px;
+            font-weight: bold;
+        }
+        .reply-input {
+            display: none;
+            margin-top: 10px;
+        }
+        .reply-input.visible {
+            display: block;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 40px auto;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .page-message {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+    <title>Landing</title>
+</head>
+<body>
+    <a href="home">
+        <img class="logo" src="src/img/logo.png" alt="Logo du site" />
+    </a>
+    <form action="/filtre" class="container" method="post">
+        <select name="categories" id="categories-select">
+            <option value="">-- Veuillez choisir une catégorie --</option>
+            {{range .Categories}}
+            <option value="{{.}}">{{.}}</option>
+            {{end}}
+        </select>
+        <button type="submit">Afficher les posts</button>
+    </form>
+
+    <form action="/filtre" class="container" method="post">
+        <input type="hidden" name="like" value="likes">
+        <button type="submit">Afficher les posts likés</button>
+    </form>
+
+    <form action="/filtre" class="container" method="post">
+        <input type="hidden" name="date" value="likes">
+        <button type="submit">Afficher les posts par date</button>
+    </form>
+    
+    {{if .Posts}}
+    {{range $index, $post := .Posts}}
+    <div class="tweet">
+        <div class="tweet-header">
+            <img src="/src/img/account_logo.jpg" alt="Profile Picture" class="tweet-profile-pic">
+            <div>
+                <span class="tweet-username">
+                    <a href="/profile/{{index $.Usernames $index}}">{{index $.Usernames $index}}</a>
+                </span>
+                <span class="tweet-time">{{index $.Dates $index}}</span>
+            </div>
+            {{if eq $.CurrentUserRole "Administrators" "Moderators"}}
+            <form action="/filtre" method="post" style="display: inline; text-align: right;">
+                <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
+                <input type="hidden" name="_method" value="DELETE">
+                <button type="submit" class="delete-button">Supprimer</button>
+            </form>
+            {{if eq $.CurrentUserRole "Moderators"}}
+            <form action="/filtre" method="post" style="display: inline; text-align: right;">
+                <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
+                <input type="hidden" name="_method" value="REPORT">
+                <button type="submit" class="delete-button">Signaler</button>
+            </form>
+            {{end}}
+            {{end}}
+        </div>
+        <div class="tweet-content">
+            <p>{{index $.Posts $index}}</p>
+            {{if ne (index $.ImagePaths $index) ""}}
+                <img class="logo" src="/{{index $.ImagePaths $index}}" alt="Post Image">
+            {{end}}
+        </div>
+        <div class="tweet-actions">
+            <form action="/filtre" method="post">
+                <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
+                <input type="hidden" name="reaction" value="1">
+                <button type="submit" class="tweet-action like-button">
+                    <span class="material-symbols-outlined like-icon">heart_plus</span>
+                    <h4>{{index $.LikeCounts $index}}</h4>
+                </button>
+            </form>
+            <form action="/filtre" method="post">
+                <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
+                <input type="hidden" name="reaction" value="-1">
+                <button type="submit" class="tweet-action dislike-button">
+                    <span class="material-symbols-outlined dislike-icon">heart_minus</span>
+                    <h4>{{index $.DislikeCounts $index}}</h4>
+                </button>
+            </form>
+        <div class="comments-section">
+            {{range $commentIndex, $comment := index $.Commentaires $index}}
+                <a href="/profile/{{index (index $.AuteurCommentaires $index) $commentIndex}}">{{index (index $.AuteurCommentaires $index) $commentIndex}}</a>
+                <p>{{$comment}}</p>
+            {{end}}
+        </div>
+    </div>
+    {{end}}
+    {{end}}    
+</body>
+</html>
