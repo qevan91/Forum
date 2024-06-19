@@ -1,36 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/src/static/login.css">
     <style>
-      body {
-    background-color: white;
-    color: rgb(48, 48, 48);
-}
-h1 {
-    font-family: Arial, sans-serif;
-}
-body.dark-theme {
-    background-color:rgb(48, 48, 48);
-    color: white;
-}
-body {
-    transition: background-color 0.3s, color 0.3s;
-}
+        body {
+            background-color: #f2f2f2; 
+            color: #333;
+            font-family: Arial, sans-serif;
+        }
+        body.dark-theme {
+            background-color: rgb(48, 48, 48);
+            color: white;
+        }
+        form {
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input[type="text"] {
+            width: calc(100% - 20px);
+            height: 40px;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            color: #555;
+            background-color: #f9f9f9;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #aaa;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        button[type="submit"] {
+            width: 100%;
+            height: 40px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #333;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button[type="submit"]:hover {
+            background-color: #555;
+        }
+        .page-message {
+            text-align: center;
+            margin-bottom: 20px;
+        }
     </style>
-    <title>create</title>
-  </head>
-  <body>
+    <title>Create</title>
+</head>
+<body>
     <a href="home">
-      <img class="logo" src="src/img/logo.png" alt="Logo du site" />
+        <img class="logo" src="src/img/logo.png" alt="Logo du site" />
     </a>
+    <div class="page-message">
+        <h2>Create a New Topic</h2>
+        <p>Please enter a topic name and description below:</p>
+    </div>
     <form action="/create" method="post">
-    <input type="TEXT" name="TopicName" placeholder="Enter a topic name" required>
-    <input type="TEXT" name="Description" placeholder="Enter the description" required>
-    <button type="submit">Submit</button>
-  </form>
-  <script src="src/java/shadowMode.js"></script>
-  </body>
+        <input type="text" name="TopicName" placeholder="Enter a topic name" required>
+        <input type="text" name="Description" placeholder="Enter the description" required>
+        <button type="submit">Submit</button>
+    </form>
+    <script src="src/java/shadowMode.js"></script>
+</body>
 </html>

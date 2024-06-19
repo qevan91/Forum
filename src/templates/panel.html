@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/src/static/panel.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <title>Panel</title>
+</head>
+<body>
+  <div class="header">
+    <a href="/home">
+      <img class="logo" src="/src/img/logo.png" alt="Site Logo">
+    </a>
+    <div class="search">
+      <form>
+        <div class="search">
+          <span class="search-icon material-symbols-outlined">search</span>
+          <input class="search-input" type="search" placeholder="Search">
+        </div>
+      </form>
+    </div>
+    <div class="account">
+      <img class="account_logo" src="/src/img/account_logo.jpg" alt="Account Image">
+    </div>
+  </div>
+  <h1>Admin Panel</h1>
+  <div id="search-results">
+    {{if eq .CurrentUserRole "Users"}}
+      <form action="/panel" method="post">
+        <button type="submit">Apply to become a moderator!</button>
+      </form>
+    {{end}}
+
+    {{if eq .CurrentUserRole "Administrators"}}
+      {{range $index, $name := .Names}}
+        <div class="user-container">
+          <a href="/profile/{{$name}}">{{$name}}</a>
+          <form action="/panel" class="container" method="post">
+            <input type="hidden" name="userID" value="{{index $.UserIDs $index}}">
+            <input type="hidden" name="Delete" value="true">
+            <button type="submit">Delete Request</button>
+          </form>
+        </div>
+      {{end}}
+    {{end}}
+  </div>
+
+  {{if eq .CurrentUserRole "Administrators"}}
+  <div id="search-results">
+    {{range $index, $post := .Posts}}
+    <div class="reported-posts">
+      <div class="container">
+        <div class="tweet-header">
+          <img src="/src/img/account_logo.jpg" alt="Profile Picture" class="tweet-profile-pic">
+          <div>
+            <span class="tweet-username">
+              <a href="/profile/{{index $.Usernames $index}}">{{index $.Usernames $index}}</a>
+            </span>
+            <span class="tweet-time">23h</span>
+          </div>
+          {{if eq $.CurrentUserRole "Administrators"}}
+          <form action="/panel" method="post" style="display: inline; text-align: right;">
+            <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
+            <input type="hidden" name="_method" value="DELETE">
+            <button type="submit" class="delete-button">Delete</button>
+          </form>
+          {{else if eq $.CurrentUserRole "Moderators"}}
+          <form action="/panel" method="post" style="display: inline; text-align: right;">
+            <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
+            <input type="hidden" name="_method" value="DELETE">
+            <button type="submit" class="delete-button">Delete</button>
+          </form>
+          <form action="/panel" method="post" style="display: inline; text-align: right;">
+            <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
+            <input type="hidden" name="_method" value="REPORT">
+            <button type="submit" class="delete-button">Report</button>
+          </form>
+          {{end}}
+        </div>
+        <div class="tweet-content">
+          <p>{{$post}}</p>
+          {{if ne (index $.ImagePaths $index) ""}}
+            <img class="logo" src="/{{index $.ImagePaths $index}}" alt="Post Image">
+          {{end}}
+        </div>
+      </div>
+    </div>
+    {{end}}
+  </div>
+  {{end}}
+</body>
+</html>

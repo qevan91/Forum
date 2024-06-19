@@ -9,8 +9,8 @@ import (
 
 var Ro = Role{
 	Guest:          "Guest",
-	Users:          "User",
-	Moderators:     "Moderator",
+	Users:          "Users",
+	Moderators:     "Moderators",
 	Administrators: "Administrators",
 }
 
@@ -75,6 +75,7 @@ func SetupDatabasePost() {
 		category_id INTEGER NOT NULL,
 		content TEXT NOT NULL,
 		image_path TEXT,
+		signaler BOOLEAN DEFAULT FALSE,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY(user_id) REFERENCES users(id),
 		FOREIGN KEY(category_id) REFERENCES categories(id)
@@ -126,6 +127,24 @@ func SetupDatabaseReactions() {
 	}
 }
 
+func SetupDatabaseRequestRole() {
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS request (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER NOT NULL,
+		FOREIGN KEY(user_id) REFERENCES users(id)
+		)`)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// Password encryption
 func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(bytes), err

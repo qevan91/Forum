@@ -6,7 +6,7 @@
     <link rel="stylesheet" type="text/css" href="/src/static/tweet.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <style>
-        .like-button {
+        .like-button, .dislike-button, .reply-button {
             cursor: pointer;
             padding: 5px 10px;
             border-radius: 5px;
@@ -17,25 +17,38 @@
         .like-button.clicked .like-icon {
             color: rgb(0, 255, 34);
         }
-        .dislike-button {
-            cursor: pointer;
-            padding: 5px 10px;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-            display: flex;
-            align-items: center;
-        }
         .dislike-button.clicked .dislike-icon {
             color: rgb(255, 0, 0);
         }
-        .message-input {
-            display: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+        .reaction-count {
+            margin-left: 5px;
+            font-weight: bold;
         }
-        .message-input.visible {
+        .reply-input {
+            display: none;
+            margin-top: 10px;
+        }
+        .reply-input.visible {
             display: block;
-            opacity: 1;
+        }
+        .page-message {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        body {
+            background-color: white;
+            color: rgb(48, 48, 48);
+        }
+        .logo, .account_logo {
+            height: 50px;
+            width: auto;
+        }
+        body.dark-theme {
+            background-color:  rgb(48, 48, 48);
+            color: white;
+        }
+        body {
+            transition: background-color 0.3s, color 0.3s;
         }
     </style>
 </head>
@@ -44,7 +57,9 @@
         <img class="logo" src="/src/img/logo.png" alt="Logo du site" />
     </a>
     <div class="container">
-        <h1>Category: {{.Category}}</h1>
+        <div class="page-message">
+            <h1>Category: {{.Category}}</h1>
+        </div>
         {{range $index, $post := .Posts}}
         <div class="tweet">
             <div class="tweet-header">
@@ -55,6 +70,24 @@
                     </span>
                     <span class="tweet-time">. 23h</span>
                 </div>
+                {{if eq $.CurrentUserRole "Administrators"}}
+                <form action="/categories/{{$.Category}}" method="post" style="display: inline; text-align: right;">
+                    <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="delete-button">. Delete</button>
+                </form>
+                {{else if eq $.CurrentUserRole "Moderators"}}
+                <form action="/categories/{{$.Category}}" method="post" style="display: inline; text-align: right;">
+                    <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="delete-button">. Delete</button>
+                </form>
+                <form action="/categories/{{$.Category}}" method="post" style="display: inline; text-align: right;">
+                    <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
+                    <input type="hidden" name="_method" value="REPORT">
+                    <button type="submit" class="delete-button">. Report</button>
+                </form>
+                {{end}}                
             </div>
             <div class="tweet-content">
                 <p>{{$post}}</p>
@@ -63,37 +96,34 @@
                 {{end}}
             </div>
             <div class="tweet-actions">
-                <div class="tweet-action like-button" onclick="submitLike(event)">
-                    <span class="material-symbols-outlined like-icon">
-                        heart_plus
-                    </span>
-                </div>
-                <div class="tweet-action dislike-button" onclick="submitDislike(event)">
-                    <span class="material-symbols-outlined dislike-icon">
-                        heart_minus 
-                    </span>
-                </div>
-                <div class="tweet-action">
-                    <span class="material-symbols-outlined" onclick="toggleReplyInput(this)">
-                        forum
-                    </span>
-                    {{if ne $.CurrentUserRole "Guest"}}
-                    <form action="/categories/{{$.Category}}" method="post">
-                        <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
-                        <input type="text" required name="reply-message" class="message-input reply-input" placeholder="Your reply">
-                        <button type="submit">Submit</button>
-                    </form>
-                    {{end}}
-                </div>
-                {{if eq $.CurrentUserRole "Administrators"}}
-                <form action="/categories/{{$.Category}}" method="post" style="display: inline;">
+                <form action="/categories/{{$.Category}}" method="post">
                     <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
-                    <input type="hidden" name="_method" value="DELETE">
-                    <button type="submit" class="delete-button">Delete</button>
+                    <input type="hidden" name="reaction" value="1">
+                    <button type="submit" class="tweet-action like-button">
+                        <span class="material-symbols-outlined like-icon">heart_plus</span>
+                        <h4>{{index $.LikeCounts $index}}</h4>
+                    </button>
                 </form>
-                {{end}}
+                <form action="/categories/{{$.Category}}" method="post">
+                    <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
+                    <input type="hidden" name="reaction" value="-1">
+                    <button type="submit" class="tweet-action dislike-button">
+                        <span class="material-symbols-outlined dislike-icon">heart_minus</span>
+                        <h4>{{index $.DislikeCounts $index}}</h4>
+                    </button>
+                </form>
+                <button type="button" class="tweet-action reply-button" onclick="toggleReplyInput(this)">
+                    <span class="material-symbols-outlined">reply</span>
+                    <h4>Reply</h4>
+                </button>
             </div>
-            <br>
+            <div class="reply-input">
+                <form action="/categories/{{$.Category}}" method="post">
+                    <input type="hidden" name="post-id" value="{{index $.PostIDs $index}}">
+                    <input type="text" name="reply-content" placeholder="Enter your message">
+                    <button type="submit">Submit</button>
+                </form>
+            </div>
             <div class="comments-section">
                 {{range $postIndex, $postComments := $.Commentaires}}
                     {{range $commentIndex, $comment := $postComments}}
@@ -106,22 +136,11 @@
         {{end}}
     </div>
     <script>
-        function submitLike(event) {
-            var likeButton = event.target.closest('.like-button');
-            likeButton.classList.toggle('clicked');
-        }
-
-        function submitDislike(event) {
-            var dislikeButton = event.target.closest('.dislike-button');
-            dislikeButton.classList.toggle('clicked');
-        }
-
-        function toggleReplyInput(replyButton) {
-            var tweetActions = replyButton.closest('.tweet-actions');
-            var replyInput = tweetActions.querySelector('.reply-input');
-            replyInput.classList.toggle('visible');
-        }
+    function toggleReplyInput(replyButton) {
+        var tweet = replyButton.closest('.tweet');
+        var replyInput = tweet.querySelector('.reply-input');
+        replyInput.classList.toggle('visible');
+    }
     </script>
-    <script src="/src/java/shadowMode.js"></script>
 </body>
 </html>

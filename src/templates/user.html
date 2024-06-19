@@ -5,20 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="/src/static/user.css">
     <title>Utilisateur</title>
-    <style>
-       .container {
-            display: flex;
-            flex-wrap: wrap;
-        }
-       .left-column {
-            flex-basis: 50%;
-            padding: 20px;
-        }
-       .right-column {
-            flex-basis: 50%;
-            padding: 20px;
-        }
-    </style>
 </head>
 <body>
     <a href="home">
@@ -35,43 +21,55 @@
             {{end}}
         </ul>
     </h4>
-        <div class="container">
-            <div style="width: 60%; float:left">
-                <form action="/user" method="post">
-                    <label for="email">New email:</label>
-                    <input type="email" id="email" name="email" required>
-                    <button type="submit">Submit</button>
-                </form>
-
-                <form action="/user" method="post">
-                    <label for="username">New username:</label>
-                    <input type="text" id="username" name="username" required>
-                    <button type="submit">Submit</button>
-                </form>
-
-                <form action="/user" method="post">
-                    <label for="password">New password:</label>
-                    <input type="text" id="password" name="password" required>
-                    <button type="submit">Submit</button>
-                </form>
-
-                <form action="/user" method="post">
-                    <button type="submit">Log Out</button>
-                </form>
-            </div>
-            <div style="width: 20%; float:middle">
-                <h2>Post:</h2>
-                {{range $index, $post :=.Posts}}
-                <p>{{$post}}</p>
-                {{end}}            
-            </div>
-            <div style="width: 20%; float:right">
-                <h2>Commentaire:</h2>
-                {{range $index, $coms :=.Commentaires}}
-                <p>{{$coms}}</p>
-                {{end}} 
-            </div>       
+    <form action="/user" method="post">
+        <button type="submit">Log Out</button>
+    </form>
+    <div class="page-message">
+        <h2>You can change your information here:</h2>
+    </div>
+    
+    <div class="container">
+        <form action="/user" method="post"> 
+            <label for="email">New email:</label> 
+            <input type="email" id="email" name="email" required style="width: 85%"> 
+            <button type="submit">Submit</button> 
+        </form>
+        <form action="/user" method="post">
+            <label for="username">New username:</label>
+            <input type="text" id="username" name="username" required style="width: 85%">
+            <button type="submit">Submit</button>
+        </form>
+        
+        <form action="/user" method="post">
+            <label for="password">New password:</label>
+            <input type="text" id="password" name="password" required style="width: 85%">
+            <button type="submit">Submit</button>
+        </form>
         </div>
+    <div style="display: inline-block; width: 20%">
+        <h2>Post:</h2>
+        {{range $index, $post :=.Posts}}
+        <p>{{$post}}</p>
+        {{end}}
+    </div> 
+    <div style="display: inline-block; width: 20%">
+        <h2>Commentaire:</h2>
+        {{range $index, $coms :=.Commentaires}}
+        <p>{{$coms}}</p>
+        {{end}}
+    </div> 
+    <div style="display: inline-block; width: 20%">
+        <h2>Liked post:</h2>
+        {{range $indexs, $liked :=.Liked}}
+        <p>{{$liked}}</p>
+        {{end}}
+    </div>
+    <div style="display: inline-block; width: 20%">
+        <h2>DisLiked post:</h2>
+        {{range $indexs, $dislike :=.Disliked}}
+        <p>{{$dislike}}</p>
+        {{end}}
+    </div>
     {{else}}
         <h4>{{.Auth}}</h4>
     {{end}}

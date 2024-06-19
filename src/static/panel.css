@@ -1,0 +1,234 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Body Styling */
+  .header {
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    gap: 20px;
+    padding: 10px; 
+  }
+  
+  .logo {
+    width: 60px; 
+    height: 60px; 
+    border-radius: 50%; 
+  }
+  .account_logo{
+    width: 60px; 
+    height: 60px; 
+    border-radius: 50%;
+  }
+  
+  .account {
+    display: flex; 
+    align-items: center;
+  }
+  
+  .account-icon {
+    font-size: 100px; 
+  }
+  
+  .search {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 28px;
+    background: #f6f6f6; 
+    gap: 10px; 
+  }
+  
+  .search-icon {
+    font-size: 24px; 
+  }
+  
+  .search-input {
+    font-size: 16px;
+    font-family: 'Lexend', sans-serif;
+    color: #d5d5d5;
+    outline: none;
+    border: none;
+    background: transparent;
+    padding: 5px;
+  }
+  
+  /* Main Container */
+  #search-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.916);
+    border-radius: 20px;
+    margin: 2rem auto;
+    padding: 2rem;
+    width: 90%;
+    max-width: 1200px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Product List Styling */
+  ul {
+    list-style-type: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    padding: 0;
+    margin: 0;
+    justify-content: center;
+  }
+  
+  ul li {
+    flex-basis: calc(20% - 2rem);
+    background-color: rgba(244, 244, 244, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  
+  ul li:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  
+  ul li img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+  }
+  
+  ul li p {
+    margin: 0.5rem 0;
+    font-size: 1.2rem;
+    color: #333;
+  }
+  
+  ul li button {
+    padding: 0.5rem 1rem;
+    border: none;
+    background-color: #007bff;
+    color: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  ul li button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* User Container Styling */
+  .user-container {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: rgba(255, 255, 255, 0.85);
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .user-container a {
+    text-decoration: none;
+    color: #007bff;
+    font-size: 1.2rem;
+  }
+  
+  .user-container a:hover {
+    text-decoration: underline;
+  }
+  
+  .user-container button {
+    padding: 0.5rem 1rem;
+    border: none;
+    background-color: #dc3545;
+    color: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .user-container button:hover {
+    background-color: #c82333;
+  }
+  
+  /* Media Queries */
+  @media (max-width: 768px) {
+    ul li {
+      flex-basis: calc(50% - 2rem);
+    }
+  
+    .user-container {
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-start;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    ul li {
+      flex-basis: calc(100% - 2rem);
+    }
+  
+    .header {
+      flex-direction: column;
+      align-items: center;
+    }
+  
+    .search {
+      width: 100%;
+      margin-top: 10px;
+    }
+  }
+
+  .tweet-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .reported-posts {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    padding: 20px;
+}
+
+.tweet-profile-pic {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.tweet-content {
+  margin-bottom: 10px;
+}
+
+.delete-button {
+  margin-left: 10px;
+  color: red;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 16px;
+}
+
+.tweet-username {
+  font-weight: bold;
+  margin-right: 5px;
+}

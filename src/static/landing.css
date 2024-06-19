@@ -260,3 +260,15 @@
 .button:active::before {
   background-color: rgb(255, 38, 0);
 }
+
+.admin-container {
+  /* Your desired styling for the admin container */
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid #ddd;
+}
+
+.user-container {
+  /* Your desired styling for each user entry */
+  margin-bottom: 10px;
+}

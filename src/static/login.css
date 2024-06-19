@@ -264,3 +264,19 @@
   color: var(--font-color);
   cursor: pointer;
 } 
+
+body {
+  background-color: white;
+  color: rgb(48, 48, 48);
+}
+.logo, .account_logo {
+  height: 50px;
+  width: auto;
+}
+body.dark-theme {
+  background-color:  rgb(48, 48, 48);
+  color: white;
+}
+body {
+  transition: background-color 0.3s, color 0.3s;
+}

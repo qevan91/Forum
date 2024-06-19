@@ -6,20 +6,45 @@
     <link rel="stylesheet" href="/src/static/login.css">
     <style>
         body {
-      background-color: white;
-      color: rgb(48, 48, 48);
-  }
-  h1 {
-      font-family: Arial, sans-serif;
-  }
-  body.dark-theme {
-      background-color:rgb(48, 48, 48);
-      color: white;
-  }
-  body {
-      transition: background-color 0.3s, color 0.3s;
-  }
-      </style>
+            background-color: white;
+            color: rgb(48, 48, 48);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        body.dark-theme {
+            background-color: rgb(48, 48, 48);
+            color: white;
+        }
+        h1 {
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            margin: 10px 0;
+        }
+        form {
+            margin-top: 20px;
+        }
+        select {
+            padding: 8px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+    </style>
     <title>post</title>
 </head>
 <body>
@@ -40,9 +65,11 @@
     </form>
     {{end}}
     <br><br>
-    {{range $index, $post := .Post}}
-    <li>{{$.Username}}: {{$post}}</li>
-    {{end}}
+    <ul>
+        {{range $index, $post := .Post}}
+        <li>{{$.Username}}: {{$post}}</li>
+        {{end}}
+    </ul>
     <script src="src/java/shadowMode.js"></script>
 </body>
 </html>

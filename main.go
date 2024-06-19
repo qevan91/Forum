@@ -11,11 +11,13 @@ import (
 )
 
 func main() {
+	// Database initialization
 	data.SetupDatabase()
 	data.SetupDatabase2()
 	data.SetupDatabasePost()
-	data.SetupDatabaseCommentary()
 	data.SetupDatabaseReactions()
+	data.SetupDatabaseCommentary()
+	data.SetupDatabaseRequestRole()
 
 	fs := http.FileServer(http.Dir("src"))
 	http.Handle("/src/", http.StripPrefix("/src/", fs))
@@ -31,6 +33,7 @@ func main() {
 	http.Handle("/create", http.HandlerFunc(data.Create))
 	http.Handle("/user", http.HandlerFunc(data.Users))
 	http.Handle("/parameter", http.HandlerFunc(data.Parameter))
+	http.Handle("/panel", http.HandlerFunc(data.Panel))
 
 	err := Open("http://localhost:8080/home")
 	if err != nil {
@@ -43,6 +46,7 @@ func main() {
 	}
 }
 
+// Opens the default browser
 func Open(url string) error {
 	var cmd string
 	var args []string
